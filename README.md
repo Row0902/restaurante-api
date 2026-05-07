@@ -42,7 +42,7 @@ fastapi dev src/main.py          # 4. Servidor de desarrollo
 | `GET` | `/ordenes` | Listar órdenes |
 | `POST` | `/ordenes` | Crear orden (con ítems del menú, calcula total) |
 | `GET` | `/ordenes/{id}` | Obtener orden por ID |
-| `PATCH` | `/ordenes/{id}/estado` | Cambiar estado de orden |
+| `PUT` | `/ordenes/{id}/estado` | Cambiar estado de orden |
 
 ### Raíz
 
@@ -72,8 +72,9 @@ Request HTTP
     │
     ▼
 ┌─────────────────────────┐
-│      main.py (84 líneas) │
+│      main.py (monolito)   │
 │                          │
+│  @app.get("/")          │──► Health check
 │  @app.get("/menu")      │──► dict global "menu" (memoria)
 │  @app.post("/menu")     │──► print() suelto
 │  @app.put("/menu")      │──► sin validación
