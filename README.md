@@ -27,41 +27,41 @@ fastapi dev src/main.py          # 4. Servidor de desarrollo
 
 ### Menú
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/menu` | Listar platos (con filtros opcionales) |
-| `POST` | `/menu` | Crear plato |
-| `GET` | `/menu/{id}` | Obtener plato por ID |
-| `PUT` | `/menu/{id}` | Actualizar plato |
-| `DELETE` | `/menu/{id}` | Eliminar plato |
+| Método   | Ruta         | Descripción                            |
+| -------- | ------------ | -------------------------------------- |
+| `GET`    | `/menu`      | Listar platos (con filtros opcionales) |
+| `POST`   | `/menu`      | Crear plato                            |
+| `GET`    | `/menu/{id}` | Obtener plato por ID                   |
+| `PUT`    | `/menu/{id}` | Actualizar plato                       |
+| `DELETE` | `/menu/{id}` | Eliminar plato                         |
 
 ### Órdenes
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/ordenes` | Listar órdenes |
-| `POST` | `/ordenes` | Crear orden (con ítems del menú, calcula total) |
-| `GET` | `/ordenes/{id}` | Obtener orden por ID |
-| `PUT` | `/ordenes/{id}/estado` | Cambiar estado de orden |
+| Método | Ruta                   | Descripción                                     |
+| ------ | ---------------------- | ----------------------------------------------- |
+| `GET`  | `/ordenes`             | Listar órdenes                                  |
+| `POST` | `/ordenes`             | Crear orden (con ítems del menú, calcula total) |
+| `GET`  | `/ordenes/{id}`        | Obtener orden por ID                            |
+| `PUT`  | `/ordenes/{id}/estado` | Cambiar estado de orden                         |
 
 ### Raíz
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/` | Health check |
+| Método | Ruta | Descripción  |
+| ------ | ---- | ------------ |
+| `GET`  | `/`  | Health check |
 
 ## Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework | FastAPI (fully async) |
-| ORM | SQLModel + SQLAlchemy (async) |
-| Base de datos | SQLite |
-| Validación | Pydantic v2 |
-| Configuración | `.env` + `pydantic-settings` |
-| Testing | pytest + pytest-cov + httpx (ASGITransport) |
-| Linting + formateo | ruff (Astral — opcional, recomendado) |
-| Type checking | ty (Astral — opcional, recomendado) |
+| Capa               | Tecnología                                  |
+| ------------------ | ------------------------------------------- |
+| Framework          | FastAPI (fully async)                       |
+| ORM                | SQLModel + SQLAlchemy (async)               |
+| Base de datos      | SQLite                                      |
+| Validación         | Pydantic v2                                 |
+| Configuración      | `.env` + `pydantic-settings`                |
+| Testing            | pytest + pytest-cov + httpx (ASGITransport) |
+| Linting + formateo | ruff (Astral — opcional, recomendado)       |
+| Type checking      | ty (Astral — opcional, recomendado)         |
 
 ## Diagramas de flujo
 
@@ -185,6 +185,11 @@ ruff format --check src/ test/   # Verificar formato sin modificar
 
 # ── Type checking (ty) ───────────────────────────────
 ty check src/ test/              # Verificar tipos
+
+# ── pre-commit ───────────────────────────────────────
+pre-commit run --all-files       # Ejecutar todos los hooks manualmente
+pre-commit install               # Instalar hooks como git hooks (pre-commit)
+pre-commit install --hook-type pre-push  # Instalar hooks como pre-push
 ```
 
 ## Variables de entorno
@@ -199,17 +204,19 @@ DEBUG=false
 
 ## Enlaces oficiales
 
-| Herramienta | Documentación |
-|-------------|---------------|
-| FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/) |
-| SQLModel | [sqlmodel.tiangolo.com](https://sqlmodel.tiangolo.com/) |
-| SQLAlchemy | [docs.sqlalchemy.org](https://docs.sqlalchemy.org/en/20/) |
-| ruff | [docs.astral.sh/ruff](https://docs.astral.sh/ruff/) |
-| ty | [docs.astral.sh/ty](https://docs.astral.sh/ty/) |
-| uv | [docs.astral.sh/uv](https://docs.astral.sh/uv/) |
-| aiosqlite | [github.com/omnilib/aiosqlite](https://github.com/omnilib/aiosqlite) |
-| pytest | [docs.pytest.org](https://docs.pytest.org/en/stable/) |
-| pytest-cov | [pytest-cov.readthedocs.io](https://pytest-cov.readthedocs.io/en/latest/) |
+| Herramienta       | Documentación                                                                     |
+| ----------------- | --------------------------------------------------------------------------------- |
+| FastAPI           | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/)                             |
+| SQLModel          | [sqlmodel.tiangolo.com](https://sqlmodel.tiangolo.com/)                           |
+| SQLAlchemy        | [docs.sqlalchemy.org](https://docs.sqlalchemy.org/en/20/)                         |
+| ruff              | [docs.astral.sh/ruff](https://docs.astral.sh/ruff/)                               |
+| ty                | [docs.astral.sh/ty](https://docs.astral.sh/ty/)                                   |
+| uv                | [docs.astral.sh/uv](https://docs.astral.sh/uv/)                                   |
+| aiosqlite         | [github.com/omnilib/aiosqlite](https://github.com/omnilib/aiosqlite)              |
+| pre-commit        | [pre-commit.com](https://pre-commit.com/)                                         |
+| pydantic-settings | [docs.pydantic.dev](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) |
+| pytest            | [docs.pytest.org](https://docs.pytest.org/en/stable/)                             |
+| pytest-cov        | [pytest-cov.readthedocs.io](https://pytest-cov.readthedocs.io/en/latest/)         |
 
 ## Entrega y evaluación
 
@@ -233,12 +240,12 @@ El archivo `prompt.md` debe contener **cada interacción con la IA**, incluyendo
 
 **Rúbrica:**
 
-| Criterio | Peso | Qué se evalúa |
-|----------|------|---------------|
-| Creatividad en los prompts | 30% | Capacidad de descomponer problemas complejos en prompts atómicos y efectivos |
-| Eficacia de las indicaciones | 30% | Precisión, contexto provisto, uso de ejemplos, restricciones claras |
-| Calidad del código final | 20% | Clean Architecture, Clean Code, tests pasando, lint limpio |
-| Iteración y corrección | 20% | Capacidad de detectar errores de la IA y reformular el prompt para corregirlos |
+| Criterio                     | Peso | Qué se evalúa                                                                  |
+| ---------------------------- | ---- | ------------------------------------------------------------------------------ |
+| Creatividad en los prompts   | 30%  | Capacidad de descomponer problemas complejos en prompts atómicos y efectivos   |
+| Eficacia de las indicaciones | 30%  | Precisión, contexto provisto, uso de ejemplos, restricciones claras            |
+| Calidad del código final     | 20%  | Clean Architecture, Clean Code, tests pasando, lint limpio                     |
+| Iteración y corrección       | 20%  | Capacidad de detectar errores de la IA y reformular el prompt para corregirlos |
 
 ### Cómo entregar
 
