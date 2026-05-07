@@ -1,6 +1,54 @@
 # Restaurante API
 
-API asíncrona para la gestión de menú y órdenes de un restaurante, construida con **Clean Architecture** y **Clean Code** como objetivo pedagógico.
+API asíncrona para la gestión de menú y órdenes de un restaurante, parte de un curso de **AI-Driven Development**. Los alumnos parten de un monolito con malas prácticas deliberadas y lo refactorizan incrementalmente con ayuda de IA hasta alcanzar **Clean Architecture** y **Clean Code**.
+
+## Arranque rápido
+
+### Con uv (recomendado)
+
+```bash
+uv sync                          # 1. Instalar dependencias
+cp .env.template .env            # 2. Configurar variables de entorno
+fastapi dev src/main.py          # 3. Servidor de desarrollo
+```
+
+### Con pip (sin uv)
+
+```bash
+python -m venv .venv             # 1. Crear entorno virtual
+source .venv/bin/activate        #    Linux / macOS
+# .venv\Scripts\activate         #    Windows
+pip install -e .                 # 2. Instalar dependencias
+cp .env.template .env            # 3. Configurar variables
+fastapi dev src/main.py          # 4. Servidor de desarrollo
+```
+
+## Endpoints
+
+### Menú
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/menu` | Listar platos (con filtros opcionales) |
+| `POST` | `/menu` | Crear plato |
+| `GET` | `/menu/{id}` | Obtener plato por ID |
+| `PUT` | `/menu/{id}` | Actualizar plato |
+| `DELETE` | `/menu/{id}` | Eliminar plato |
+
+### Órdenes
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/ordenes` | Listar órdenes |
+| `POST` | `/ordenes` | Crear orden (con ítems del menú, calcula total) |
+| `GET` | `/ordenes/{id}` | Obtener orden por ID |
+| `PATCH` | `/ordenes/{id}/estado` | Cambiar estado de orden |
+
+### Raíz
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Health check |
 
 ## Stack
 
@@ -108,43 +156,34 @@ Request HTTP
 - Schemas separados de modelos de DB
 - Todas las operaciones de DB son asíncronas (`await repo.get_all()`)
 
-## Endpoints
-
-### Menú
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/menu` | Listar platos (con filtros opcionales) |
-| `POST` | `/menu` | Crear plato |
-| `GET` | `/menu/{id}` | Obtener plato por ID |
-| `PUT` | `/menu/{id}` | Actualizar plato |
-| `DELETE` | `/menu/{id}` | Eliminar plato |
-
-### Órdenes
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/ordenes` | Listar órdenes |
-| `POST` | `/ordenes` | Crear orden (con ítems del menú, calcula total) |
-| `GET` | `/ordenes/{id}` | Obtener orden por ID |
-| `PATCH` | `/ordenes/{id}/estado` | Cambiar estado de orden |
-
-### Raíz
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/` | Health check |
-
 ## Testing
 
 **10 tests en total:**
 - **5 tests unitarios** — lógica de servicios con repos mockeados
 - **5 tests de integración** — endpoints reales con base de datos en memoria
 
-Ejecutar con:
+```bash
+pytest -v                                          # Todos los tests
+pytest -v --cov=src --cov-report=term-missing      # Con cobertura
+pytest -v test/unit                                # Solo unitarios
+pytest -v test/integration                         # Solo integración
+```
+
+## Comandos útiles
 
 ```bash
-pytest -v --cov=src --cov-report=term-missing
+# ── FastAPI ──────────────────────────────────────────
+fastapi dev src/main.py          # Servidor de desarrollo (hot reload)
+fastapi run src/main.py          # Servidor de producción
+
+# ── Linting y formateo (ruff) ────────────────────────
+ruff check src/ test/            # Chequear errores de estilo
+ruff check --fix src/ test/      # Auto-corregir los que se pueden
+ruff format src/ test/           # Formatear código
+ruff format --check src/ test/   # Verificar formato sin modificar
+
+# ── Type checking (ty) ───────────────────────────────
+ty check src/ test/              # Verificar tipos
 ```
 
 ## Variables de entorno
@@ -157,42 +196,6 @@ APP_NAME=Restaurante API
 DEBUG=false
 ```
 
-## Comandos útiles
-
-```bash
-# ── FastAPI ──────────────────────────────────────────
-fastapi dev src/main.py          # Servidor de desarrollo (hot reload)
-fastapi run src/main.py          # Servidor de producción
-
-# ── Testing ──────────────────────────────────────────
-pytest -v                        # Todos los tests
-pytest -v --cov=src --cov-report=term-missing   # Con cobertura
-pytest -v test/unit              # Solo unitarios
-pytest -v test/integration       # Solo integración
-
-# ── Linting y formateo (ruff) ────────────────────────
-ruff check src/ test/            # Chequear errores de estilo
-ruff check --fix src/ test/      # Auto-corregir los que se pueden
-ruff format src/ test/           # Formatear código
-ruff format --check src/ test/   # Verificar formato sin modificar
-
-# ── Type checking (ty) ───────────────────────────────
-ty check src/ test/              # Verificar tipos
-```
-
-## Levantar el proyecto
-
-```bash
-# Instalar dependencias
-uv sync
-
-# Desarrollo
-fastapi dev src/main.py
-
-# Producción
-fastapi run src/main.py
-```
-
 ## Enlaces oficiales
 
 | Herramienta | Documentación |
@@ -203,12 +206,9 @@ fastapi run src/main.py
 | ruff | [docs.astral.sh/ruff](https://docs.astral.sh/ruff/) |
 | ty | [docs.astral.sh/ty](https://docs.astral.sh/ty/) |
 | uv | [docs.astral.sh/uv](https://docs.astral.sh/uv/) |
+| aiosqlite | [github.com/omnilib/aiosqlite](https://github.com/omnilib/aiosqlite) |
 | pytest | [docs.pytest.org](https://docs.pytest.org/en/stable/) |
 | pytest-cov | [pytest-cov.readthedocs.io](https://pytest-cov.readthedocs.io/en/latest/) |
-
-## Objetivo del proyecto
-
-Este proyecto es parte de un curso de **AI-Driven Development**. Los alumnos parten de un código base deliberadamente malo (`main.py` monolítico, sin validación, sin tests, sin async) y lo transforman incrementalmente con ayuda de IA aplicando Clean Architecture, Clean Code, testing, y las herramientas del stack moderno de Python.
 
 ## Entrega y evaluación
 

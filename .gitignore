@@ -4,6 +4,8 @@ __pycache__/
 *.db
 .env
 .venv/
+.atl/
+.engram/
 
 ### AL ###
 #Template for AL projects for Dynamics 365 Business Central
