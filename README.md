@@ -222,7 +222,7 @@ DEBUG=false
 
 ### Fecha límite
 
-**Lunes 9 de junio** (última clase, evaluación final). No se aceptan entregas fuera de término.
+**Lunes 8 de junio** (última clase, evaluación final). No se aceptan entregas fuera de término.
 
 ### Formato de entrega
 
