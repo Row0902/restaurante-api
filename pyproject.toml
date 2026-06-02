@@ -61,3 +61,6 @@ output-format = "concise"
 addopts = "-ra -q"
 pythonpath = ["src"]
 testpaths = ["test"]
+
+[tool.fastapi-cli]
+app = "src.main:app"
