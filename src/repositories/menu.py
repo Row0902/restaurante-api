@@ -11,8 +11,8 @@ class MenuRepository:
         self.session = session
 
     async def get_all(self) -> list[Plato]:
-        result = await self.session.exec(select(Plato))
-        return result.all()
+        result = await self.session.execute(select(Plato))
+        return result.scalars().all()
 
     async def get_by_id(self, plato_id: int) -> Plato | None:
         return await self.session.get(Plato, plato_id)

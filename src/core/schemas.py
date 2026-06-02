@@ -1,8 +1,8 @@
 # src/core/schemas.py
 from pydantic import BaseModel, Field
 
-
 # --- Plato ---
+
 
 class PlatoCreate(BaseModel):
     nombre: str
@@ -29,6 +29,7 @@ class PlatoResponse(BaseModel):
 
 
 # --- Orden ---
+
 
 class OrdenItemCreate(BaseModel):
     plato_id: int

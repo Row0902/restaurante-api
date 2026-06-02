@@ -9,7 +9,7 @@ class Plato(SQLModel, table=True):
     precio: float
     disponible: bool = True
 
-    items: list["OrdenItem"] = Relationship(back_populates="plato")
+    items: list[OrdenItem] = Relationship(back_populates="plato")
 
 
 class OrdenItem(SQLModel, table=True):
@@ -18,7 +18,7 @@ class OrdenItem(SQLModel, table=True):
     plato_id: int = Field(foreign_key="plato.id")
     cantidad: int = 1
 
-    orden: "Orden" = Relationship(back_populates="items")
+    orden: Orden = Relationship(back_populates="items")
     plato: Plato = Relationship(back_populates="items")
 
 

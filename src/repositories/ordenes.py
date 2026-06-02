@@ -18,9 +18,7 @@ class OrdenesRepository:
 
     async def get_by_id(self, orden_id: int) -> Orden | None:
         result = await self.session.execute(
-            select(Orden)
-            .where(Orden.id == orden_id)
-            .options(selectinload(Orden.items))
+            select(Orden).where(Orden.id == orden_id).options(selectinload(Orden.items))
         )
         return result.scalars().first()
 

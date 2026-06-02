@@ -37,10 +37,12 @@ class OrdenesService:
                     detail=f"Plato {item_data.plato_id} no encontrado",
                 )
             total += plato.precio * item_data.cantidad
-            items.append(OrdenItem(
-                plato_id=item_data.plato_id,
-                cantidad=item_data.cantidad,
-            ))
+            items.append(
+                OrdenItem(
+                    plato_id=item_data.plato_id,
+                    cantidad=item_data.cantidad,
+                )
+            )
         orden = Orden(total=total)
         return await self.repo.add(orden, items)
 
