@@ -10,21 +10,13 @@ from uuid import uuid4, UUID
 from core.schemas import DishCreate, OrderCreate
 from repositories.in_memory_repository import InMemoryRepository
 from core.exceptions import NotFoundError, BadRequestError
+from fastapi.responses import JSONResponse
 
 # instantiate the in-memory repository (will be injected later)
 repo = InMemoryRepository()
 
-from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 
-
-@app.exception_handler(NotFoundError)
-async def not_found_exception_handler(request, exc: NotFoundError):
-    return HTTPException(status_code=404, detail=exc.message)
-
-
-@app.exception_handler(BadRequestError)
-async def bad_request_exception_handler(request, exc: BadRequestError):
-    return HTTPException(status_code=400, detail=exc.message)
 
 APP_NAME = "Restaurante API"
 APP_VERSION = "0.1.0"
@@ -35,6 +27,16 @@ app = FastAPI(
     version=APP_VERSION,
     description=APP_DESCRIPTION,
 )
+
+
+@app.exception_handler(NotFoundError)
+async def not_found_exception_handler(request, exc: NotFoundError):
+    return JSONResponse(status_code=404, content={"detail": exc.message})
+
+
+@app.exception_handler(BadRequestError)
+async def bad_request_exception_handler(request, exc: BadRequestError):
+    return JSONResponse(status_code=400, content={"detail": exc.message})
 
 # Keep permissive CORS for local development; tighten later via env config.
 app.add_middleware(
