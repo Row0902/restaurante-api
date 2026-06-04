@@ -8,6 +8,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4, UUID
 from core.schemas import DishCreate, OrderCreate
+from repositories.in_memory_repository import InMemoryRepository
+
+# instantiate the in-memory repository (will be injected later)
+repo = InMemoryRepository()
 
 APP_NAME = "Restaurante API"
 APP_VERSION = "0.1.0"
@@ -45,49 +49,37 @@ ordenes = {}
 @app.get("/menu", tags=["Menú"])
 async def listar_menu():
     """Devuelve todos los platos del menú."""
-    return list(menu.values())
+    dishes = await repo.list_dishes()
+    # serialize to Spanish-keyed dicts
+    return [d.dict(by_alias=True) for d in dishes]
 
 
 @app.post("/menu", tags=["Menú"], status_code=201)
 async def crear_plato(plato: DishCreate):
     """Crea un nuevo plato validado por Pydantic (aliases en español)."""
-    new_id = str(uuid4())
-    # plato attributes are accessible by field names (name, description, price)
-    menu[new_id] = {
-        "id": new_id,
-        "nombre": plato.name,
-        "descripcion": plato.description,
-        "precio": plato.price,
-    }
-    return menu[new_id]
+    created = await repo.create_dish(plato)
+    return created.dict(by_alias=True)
 
 
 @app.get("/menu/{plato_id}", tags=["Menú"])
 async def obtener_plato(plato_id: UUID):
     """Obtiene un plato por su ID (UUID validation done by FastAPI)."""
-    key = str(plato_id)
-    return menu[key]
+    dish = await repo.get_dish(plato_id)
+    return dish.dict(by_alias=True)
 
 
 @app.put("/menu/{plato_id}", tags=["Menú"])
 async def actualizar_plato(plato_id: UUID, plato: DishCreate):
     """Actualiza un plato existente."""
-    key = str(plato_id)
-    menu[key] = {
-        "id": key,
-        "nombre": plato.name,
-        "descripcion": plato.description,
-        "precio": plato.price,
-    }
-    return menu[key]
+    updated = await repo.update_dish(plato_id, plato)
+    return updated.dict(by_alias=True)
 
 
 @app.delete("/menu/{plato_id}", tags=["Menú"])
 async def eliminar_plato(plato_id: UUID):
     """Elimina un plato del menú."""
-    key = str(plato_id)
-    eliminado = menu.pop(key)
-    return {"mensaje": "Plato eliminado", "id": key}
+    await repo.delete_dish(plato_id)
+    return {"mensaje": "Plato eliminado", "id": str(plato_id)}
 
 
 # --- ORDENES ---
@@ -96,39 +88,24 @@ async def eliminar_plato(plato_id: UUID):
 @app.get("/ordenes", tags=["Órdenes"])
 async def listar_ordenes():
     """Devuelve todas las órdenes registradas."""
-    return list(ordenes.values())
+    orders = await repo.list_orders()
+    return [o.dict(by_alias=True) for o in orders]
 
 
 @app.post("/ordenes", tags=["Órdenes"], status_code=201)
 async def crear_orden(orden: OrderCreate):
     """Crea una nueva orden con ítems del menú y calcula el total."""
-    new_id = str(uuid4())
-    total = 0.0
-    items_out = []
-    for item in orden.items:
-        dish_key = str(item.dish_id)
-        cantidad = item.quantity
-        # If dish_key not present this will raise KeyError -> 500 for now.
-        dish = menu[dish_key]
-        total += dish["precio"] * cantidad
-        items_out.append({"plato_id": dish_key, "cantidad": cantidad})
-    ordenes[new_id] = {
-        "id": new_id,
-        "items": items_out,
-        "total": total,
-        "estado": "pendiente",
-    }
-    return ordenes[new_id]
+    created = await repo.create_order(orden)
+    return created.dict(by_alias=True)
 
 
 @app.get("/ordenes/{orden_id}", tags=["Órdenes"])
 async def obtener_orden(orden_id: UUID):
-    key = str(orden_id)
-    return ordenes[key]
+    order = await repo.get_order(orden_id)
+    return order.dict(by_alias=True)
 
 
 @app.put("/ordenes/{orden_id}/estado", tags=["Órdenes"])
 async def cambiar_estado_orden(orden_id: UUID, estado: dict):
-    key = str(orden_id)
-    ordenes[key]["estado"] = estado.get("estado")
-    return ordenes[key]
+    updated = await repo.update_order_status(orden_id, estado.get("estado"))
+    return updated.dict(by_alias=True)
