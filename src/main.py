@@ -1,10 +1,13 @@
-"""API de restaurante — menú y órdenes.
+"""API de restaurante — menú y órdenes (refactor parcial).
 
-Monolito inicial para el curso de AI-Driven Development.
+This module keeps route paths in Spanish for backwards compatibility but uses
+Pydantic schemas for validation (internal names are English; public JSON keys are Spanish).
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from uuid import uuid4, UUID
+from core.schemas import DishCreate, OrderCreate
 
 APP_NAME = "Restaurante API"
 APP_VERSION = "0.1.0"
@@ -16,7 +19,7 @@ app = FastAPI(
     description=APP_DESCRIPTION,
 )
 
-# Esto es terrible, pero funciona
+# Keep permissive CORS for local development; tighten later via env config.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,12 +29,12 @@ app.add_middleware(
 
 
 @app.get("/")
-def raiz():
+async def raiz():
     """Endpoint raíz — health check."""
     return {"mensaje": "API corriendo 👋"}
 
 
-# "Base de datos" — un dict en memoria, sin tipos, sin nada
+# In-memory storage (temporary). Keys are string UUIDs.
 menu = {}
 ordenes = {}
 
@@ -40,161 +43,92 @@ ordenes = {}
 
 
 @app.get("/menu", tags=["Menú"])
-def listar_menu():
-    """Devuelve todos los platos del menú.
-
-    Returns:
-        list: Lista de platos almacenados en memoria.
-    """
-    print("Listando menu...")
+async def listar_menu():
+    """Devuelve todos los platos del menú."""
     return list(menu.values())
 
 
-@app.post("/menu", tags=["Menú"])
-def crear_plato(plato: dict):
-    """Crea un nuevo plato en el menú.
-
-    Args:
-        plato (dict): Datos del plato sin validar.
-
-    Returns:
-        dict: Plato creado con ID asignado.
-    """
-    id = str(len(menu) + 1)
-    menu[id] = {"id": id, **plato}
-    print(f"Plato creado: {menu[id]}")
-    return menu[id]
+@app.post("/menu", tags=["Menú"], status_code=201)
+async def crear_plato(plato: DishCreate):
+    """Crea un nuevo plato validado por Pydantic (aliases en español)."""
+    new_id = str(uuid4())
+    # plato attributes are accessible by field names (name, description, price)
+    menu[new_id] = {
+        "id": new_id,
+        "nombre": plato.name,
+        "descripcion": plato.description,
+        "precio": plato.price,
+    }
+    return menu[new_id]
 
 
 @app.get("/menu/{plato_id}", tags=["Menú"])
-def obtener_plato(plato_id: str):
-    """Obtiene un plato por su ID.
-
-    Args:
-        plato_id (str): ID del plato.
-
-    Returns:
-        dict: Datos del plato.
-
-    Raises:
-        KeyError: Si el plato no existe.
-    """
-    print(f"Buscando plato: {plato_id}")
-    return menu[plato_id]
+async def obtener_plato(plato_id: UUID):
+    """Obtiene un plato por su ID (UUID validation done by FastAPI)."""
+    key = str(plato_id)
+    return menu[key]
 
 
 @app.put("/menu/{plato_id}", tags=["Menú"])
-def actualizar_plato(plato_id: str, plato: dict):
-    """Actualiza un plato existente.
-
-    Args:
-        plato_id (str): ID del plato a actualizar.
-        plato (dict): Nuevos datos del plato.
-
-    Returns:
-        dict: Plato actualizado.
-    """
-    menu[plato_id] = {"id": plato_id, **plato}
-    print(f"Plato actualizado: {menu[plato_id]}")
-    return menu[plato_id]
+async def actualizar_plato(plato_id: UUID, plato: DishCreate):
+    """Actualiza un plato existente."""
+    key = str(plato_id)
+    menu[key] = {
+        "id": key,
+        "nombre": plato.name,
+        "descripcion": plato.description,
+        "precio": plato.price,
+    }
+    return menu[key]
 
 
 @app.delete("/menu/{plato_id}", tags=["Menú"])
-def eliminar_plato(plato_id: str):
-    """Elimina un plato del menú.
-
-    Args:
-        plato_id (str): ID del plato a eliminar.
-
-    Returns:
-        dict: Mensaje de confirmación e ID eliminado.
-
-    Raises:
-        KeyError: Si el plato no existe.
-    """
-    eliminado = menu.pop(plato_id)
-    print(f"Plato eliminado: {eliminado}")
-    return {"mensaje": "Plato eliminado", "id": plato_id}
+async def eliminar_plato(plato_id: UUID):
+    """Elimina un plato del menú."""
+    key = str(plato_id)
+    eliminado = menu.pop(key)
+    return {"mensaje": "Plato eliminado", "id": key}
 
 
 # --- ORDENES ---
 
 
 @app.get("/ordenes", tags=["Órdenes"])
-def listar_ordenes():
-    """Devuelve todas las órdenes registradas.
-
-    Returns:
-        list: Lista de órdenes almacenadas en memoria.
-    """
-    print("Listando ordenes...")
+async def listar_ordenes():
+    """Devuelve todas las órdenes registradas."""
     return list(ordenes.values())
 
 
-@app.post("/ordenes", tags=["Órdenes"])
-def crear_orden(orden: dict):
-    """Crea una nueva orden con ítems del menú.
-
-    Calcula el total automáticamente a partir de los precios del menú.
-
-    Args:
-        orden (dict): Orden con lista de ítems (plato_id, cantidad).
-
-    Returns:
-        dict: Orden creada con ID, total calculado y estado "pendiente".
-
-    Raises:
-        KeyError: Si algún plato_id no existe en el menú.
-    """
-    id = str(len(ordenes) + 1)
-    total = 0
-    items = orden.get("items", [])
-    for item in items:
-        plato_id = item.get("plato_id")
-        cantidad = item.get("cantidad", 1)
-        plato = menu[plato_id]  # si no existe, explota con 500
-        total += plato["precio"] * cantidad
-    ordenes[id] = {
-        "id": id,
-        "items": items,
+@app.post("/ordenes", tags=["Órdenes"], status_code=201)
+async def crear_orden(orden: OrderCreate):
+    """Crea una nueva orden con ítems del menú y calcula el total."""
+    new_id = str(uuid4())
+    total = 0.0
+    items_out = []
+    for item in orden.items:
+        dish_key = str(item.dish_id)
+        cantidad = item.quantity
+        # If dish_key not present this will raise KeyError -> 500 for now.
+        dish = menu[dish_key]
+        total += dish["precio"] * cantidad
+        items_out.append({"plato_id": dish_key, "cantidad": cantidad})
+    ordenes[new_id] = {
+        "id": new_id,
+        "items": items_out,
         "total": total,
         "estado": "pendiente",
     }
-    print(f"Orden creada: {ordenes[id]}")
-    return ordenes[id]
+    return ordenes[new_id]
 
 
 @app.get("/ordenes/{orden_id}", tags=["Órdenes"])
-def obtener_orden(orden_id: str):
-    """Obtiene una orden por su ID.
-
-    Args:
-        orden_id (str): ID de la orden.
-
-    Returns:
-        dict: Datos de la orden.
-
-    Raises:
-        KeyError: Si la orden no existe.
-    """
-    print(f"Buscando orden: {orden_id}")
-    return ordenes[orden_id]
+async def obtener_orden(orden_id: UUID):
+    key = str(orden_id)
+    return ordenes[key]
 
 
 @app.put("/ordenes/{orden_id}/estado", tags=["Órdenes"])
-def cambiar_estado_orden(orden_id: str, estado: dict):
-    """Cambia el estado de una orden.
-
-    Args:
-        orden_id (str): ID de la orden.
-        estado (dict): Nuevo estado (ej. {"estado": "entregado"}).
-
-    Returns:
-        dict: Orden con el estado actualizado.
-
-    Raises:
-        KeyError: Si la orden no existe.
-    """
-    print(f"Cambiando estado de orden {orden_id} a {estado}")
-    ordenes[orden_id]["estado"] = estado.get("estado")
-    return ordenes[orden_id]
+async def cambiar_estado_orden(orden_id: UUID, estado: dict):
+    key = str(orden_id)
+    ordenes[key]["estado"] = estado.get("estado")
+    return ordenes[key]

@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+src/main.py
+src/restaurante_api.egg-info/PKG-INFO
+src/restaurante_api.egg-info/SOURCES.txt
+src/restaurante_api.egg-info/dependency_links.txt
+src/restaurante_api.egg-info/requires.txt
+src/restaurante_api.egg-info/top_level.txt
+test/test_main.py
