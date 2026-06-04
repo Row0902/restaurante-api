@@ -11,6 +11,7 @@ from core.schemas import (
     OrderResponse,
     OrderItemBase,
 )
+from core.exceptions import NotFoundError
 from repositories.abstract_repository import AbstractRepository
 
 
@@ -44,12 +45,17 @@ class InMemoryRepository(AbstractRepository):
     async def get_dish(self, dish_id: UUID) -> DishResponse:
         key = str(dish_id)
         async with self._lock:
-            v = self._menu[key]
+            try:
+                v = self._menu[key]
+            except KeyError:
+                raise NotFoundError(f"Dish {dish_id} not found")
         return DishResponse(id=dish_id, name=v["nombre"], description=v.get("descripcion"), price=v["precio"])
 
     async def update_dish(self, dish_id: UUID, dish_update: DishCreate) -> DishResponse:
         key = str(dish_id)
         async with self._lock:
+            if key not in self._menu:
+                raise NotFoundError(f"Dish {dish_id} not found")
             self._menu[key] = {
                 "id": key,
                 "nombre": dish_update.name,
@@ -62,7 +68,10 @@ class InMemoryRepository(AbstractRepository):
     async def delete_dish(self, dish_id: UUID) -> None:
         key = str(dish_id)
         async with self._lock:
-            self._menu.pop(key)
+            try:
+                self._menu.pop(key)
+            except KeyError:
+                raise NotFoundError(f"Dish {dish_id} not found")
 
     async def list_orders(self) -> List[OrderResponse]:
         async with self._lock:
@@ -81,7 +90,10 @@ class InMemoryRepository(AbstractRepository):
         async with self._lock:
             for item in order_create.items:
                 key = str(item.dish_id)
-                dish = self._menu[key]
+                try:
+                    dish = self._menu[key]
+                except KeyError:
+                    raise NotFoundError(f"Dish {item.dish_id} not found")
                 cantidad = item.quantity
                 total += dish["precio"] * cantidad
                 items_out.append({"plato_id": key, "cantidad": cantidad})
@@ -105,7 +117,10 @@ class InMemoryRepository(AbstractRepository):
     async def get_order(self, order_id: UUID) -> OrderResponse:
         key = str(order_id)
         async with self._lock:
-            v = self._orders[key]
+            try:
+                v = self._orders[key]
+            except KeyError:
+                raise NotFoundError(f"Order {order_id} not found")
         return OrderResponse(
             id=order_id,
             items=[OrderItemBase(dish_id=UUID(i["plato_id"]), quantity=i["cantidad"]) for i in v["items"]],
@@ -117,6 +132,8 @@ class InMemoryRepository(AbstractRepository):
     async def update_order_status(self, order_id: UUID, status: str) -> OrderResponse:
         key = str(order_id)
         async with self._lock:
+            if key not in self._orders:
+                raise NotFoundError(f"Order {order_id} not found")
             self._orders[key]["estado"] = status
             v = self._orders[key]
         return OrderResponse(

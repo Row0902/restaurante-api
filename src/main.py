@@ -9,9 +9,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4, UUID
 from core.schemas import DishCreate, OrderCreate
 from repositories.in_memory_repository import InMemoryRepository
+from core.exceptions import NotFoundError, BadRequestError
 
 # instantiate the in-memory repository (will be injected later)
 repo = InMemoryRepository()
+
+from fastapi import HTTPException
+
+
+@app.exception_handler(NotFoundError)
+async def not_found_exception_handler(request, exc: NotFoundError):
+    return HTTPException(status_code=404, detail=exc.message)
+
+
+@app.exception_handler(BadRequestError)
+async def bad_request_exception_handler(request, exc: BadRequestError):
+    return HTTPException(status_code=400, detail=exc.message)
 
 APP_NAME = "Restaurante API"
 APP_VERSION = "0.1.0"
