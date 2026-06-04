@@ -1,0 +1,21 @@
+{
+  "id": "implemented_async_in_memory_repository",
+  "title": "Implemented async in-memory repository",
+  "type": "architecture",
+  "scope": "project",
+  "topic_key": "sdd/repo-implementation",
+  "capture_prompt": true,
+  "content": {
+    "What": "Implemented InMemoryRepository with asyncio.Lock and async methods; wired repo into src/main.py and moved storage access to repo",
+    "Why": "Encapsulate persistence for future swap, concurrency safety",
+    "Where": {
+      "files_changed": [
+        "src/repositories/in_memory_repository.py",
+        "src/repositories/abstract_repository.py",
+        "src/core/schemas.py",
+        "src/main.py"
+      ]
+    },
+    "Learned": "Pydantic Config deprecation; tests passed; need error handling for missing IDs; next recommended steps"
+  }
+}
