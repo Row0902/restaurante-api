@@ -1,0 +1,25 @@
+{
+  "id": "sdd_task1_pydantic_conventions_2026-06-04T00:00:00Z",
+  "title": "SDD decision - task1 pydantic & conventions",
+  "type": "decision",
+  "scope": "project",
+  "topic_key": "sdd/task1",
+  "capture_prompt": true,
+  "content": {
+    "What": "Confirm 'engram' mode. Task 1 will add Pydantic schemas and validation; HTTP route paths remain Spanish; internal code and tests in English; use uuid4 for IDs; design repository interfaces as async from the start.",
+    "Why": "Provide a clear validation layer (Pydantic) early to keep domain invariants centralised; keep public API surface familiar to Spanish-speaking clients while maintaining English for internal consistency and tests; use uuid4 for stable, globally unique identifiers; design async repository interfaces to avoid future refactors and to match async DB drivers.",
+    "Where": {
+      "project_root": "C:/Users/Gabriel/Documents/Cursoagi/restaurante-api",
+      "files_to_change": [
+        "src/schemas.py (new) or src/models/schemas.py",
+        "src/api/*.py (route handlers / endpoints) — keep route paths in Spanish",
+        "src/services/*.py (business logic using Pydantic models)",
+        "src/repositories/*.py (define async repository interfaces; implementations later)",
+        "tests/test_*.py (tests written in English; add validation tests)",
+        "pyproject.toml or requirements.txt (pin Pydantic version and related libs)",
+        "migrations/ (if present — ensure UUID column types and defaults are compatible)"
+      ]
+    },
+    "Learned": "Choosing Pydantic early enforces a validation boundary that simplifies service code but requires care when mapping to persistence (UUID vs DB types). Spanish HTTP paths means router strings and API docs remain Spanish while code and tests use English identifiers. Async repository interfaces imply selecting async-compatible drivers (e.g., asyncpg, databases, motor) and writing async tests/mocks. Using uuid4 affects how IDs are serialized, validated, and stored; migration scripts may be required to convert existing integer PKs if present."
+  }
+}
