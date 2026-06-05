@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, conint, confloat
+from pydantic import BaseModel, Field, conint, confloat, ConfigDict
 
 
 class DishBase(BaseModel):
@@ -10,12 +10,11 @@ class DishBase(BaseModel):
     description: Optional[str] = Field(None, alias="descripcion")
     price: confloat(ge=0.0) = Field(..., alias="precio")
 
-    class Config:
-        allow_population_by_field_name = True
-        anystr_strip_whitespace = True
-        schema_extra = {
-            "example": {"nombre": "Milanesa", "descripcion": "Con papas", "precio": 12.5}
-        }
+    model_config = ConfigDict(
+        validate_by_name=True,
+        str_strip_whitespace=True,
+        json_schema_extra={"example": {"nombre": "Milanesa", "descripcion": "Con papas", "precio": 12.5}},
+    )
 
 
 class DishCreate(DishBase):
@@ -25,23 +24,25 @@ class DishCreate(DishBase):
 class DishResponse(DishBase):
     id: UUID = Field(..., alias="id")
 
-    class Config(DishBase.Config):
-        orm_mode = True
+    model_config = ConfigDict(
+        validate_by_name=True,
+        str_strip_whitespace=True,
+        json_schema_extra={"example": {"nombre": "Milanesa", "descripcion": "Con papas", "precio": 12.5}},
+        from_attributes=True,
+    )
 
 
 class OrderItemBase(BaseModel):
     dish_id: UUID = Field(..., alias="plato_id")
     quantity: conint(ge=1) = Field(..., alias="cantidad")
 
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(validate_by_name=True)
 
 
 class OrderCreate(BaseModel):
     items: List[OrderItemBase] = Field(..., alias="items")
 
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(validate_by_name=True)
 
 
 class OrderResponse(BaseModel):
@@ -51,6 +52,4 @@ class OrderResponse(BaseModel):
     status: str = Field(..., alias="estado")
     created_at: Optional[datetime] = Field(None, alias="creado_en")
 
-    class Config:
-        allow_population_by_field_name = True
-        orm_mode = True
+    model_config = ConfigDict(validate_by_name=True, from_attributes=True)
