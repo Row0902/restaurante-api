@@ -6,6 +6,9 @@ __pycache__/
 .venv/
 .atl/
 .engram/
+.coverage
+htmlcov/
+.pytest_cache/
 
 ### AL ###
 #Template for AL projects for Dynamics 365 Business Central
