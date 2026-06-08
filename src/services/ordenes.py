@@ -27,10 +27,14 @@ class OrdenesService:
         return orden
 
     async def crear(self, data: OrdenCreate) -> Orden:
+        plato_ids = [item.plato_id for item in data.items]
+        platos = await self.menu_repo.get_by_ids(plato_ids)
+        platos_map = {plato.id: plato for plato in platos}
+
         total = 0.0
         items = []
         for item_data in data.items:
-            plato = await self.menu_repo.get_by_id(item_data.plato_id)
+            plato = platos_map.get(item_data.plato_id)
             if not plato:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -50,7 +54,7 @@ class OrdenesService:
         if data.estado not in ESTADOS_VALIDOS:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Estado inválido. Válidos: {ESTADOS_VALIDOS}",
+                detail=f"Estado inválido. Válidos: {', '.join(sorted(ESTADOS_VALIDOS))}",
             )
         orden = await self.obtener(orden_id)
         return await self.repo.update_estado(orden, data.estado)

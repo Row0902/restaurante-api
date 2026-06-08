@@ -17,6 +17,12 @@ class MenuRepository:
     async def get_by_id(self, plato_id: int) -> Plato | None:
         return await self.session.get(Plato, plato_id)
 
+    async def get_by_ids(self, plato_ids: list[int]) -> list[Plato]:
+        result = await self.session.execute(
+            select(Plato).where(Plato.id.in_(plato_ids))
+        )
+        return result.scalars().all()
+
     async def add(self, data: PlatoCreate) -> Plato:
         plato = Plato(**data.model_dump())
         self.session.add(plato)

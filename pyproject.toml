@@ -59,7 +59,7 @@ include = ["src", "test"]
 output-format = "concise"
 
 [tool.fastapi-cli]
-app = "src.main:app"
+app = "main:app"
 
 [tool.pytest.ini_options]
 addopts = "-ra -q"

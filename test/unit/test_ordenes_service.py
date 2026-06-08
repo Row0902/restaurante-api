@@ -69,15 +69,16 @@ async def test_crear_orden_exitosa(service, repo, menu_repo):
     plato1 = Plato(id=1, nombre="Milanesa", precio=1500.0)
     plato2 = Plato(id=2, nombre="Gaseosa", precio=500.0)
 
-    # get_by_id del menú devuelve los platos simulados
-    async def mock_get_by_id(plato_id):
-        if plato_id == 1:
-            return plato1
-        if plato_id == 2:
-            return plato2
-        return None
+    # get_by_ids del menú devuelve los platos simulados
+    async def mock_get_by_ids(plato_ids):
+        res = []
+        if 1 in plato_ids:
+            res.append(plato1)
+        if 2 in plato_ids:
+            res.append(plato2)
+        return res
 
-    menu_repo.get_by_id = AsyncMock(side_effect=mock_get_by_id)
+    menu_repo.get_by_ids = AsyncMock(side_effect=mock_get_by_ids)
 
     # Datos para crear la orden: 1 Milanesa (1500) y 2 Gaseosas (1000). Total = 2500.
     items_create = [
@@ -112,7 +113,7 @@ async def test_crear_orden_exitosa(service, repo, menu_repo):
 @pytest.mark.asyncio
 async def test_crear_orden_plato_inexistente(service, menu_repo):
     """crear() lanza 404 si algún plato de la orden no existe."""
-    menu_repo.get_by_id = AsyncMock(return_value=None)
+    menu_repo.get_by_ids = AsyncMock(return_value=[])
     data = OrdenCreate(items=[OrdenItemCreate(plato_id=99, cantidad=1)])
 
     with pytest.raises(HTTPException) as exc:
