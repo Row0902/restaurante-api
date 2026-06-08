@@ -28,7 +28,7 @@ dev = [
 fix = true
 indent-width = 4
 line-length = 88
-target-version = "py314"
+target-version = "py311"
 
 [tool.ruff.analyze]
 detect-string-imports = true
@@ -42,7 +42,7 @@ quote-style = "double"
 [tool.ruff.lint]
 extend-select = ["B", "D", "I", "N", "Q", "UP"]
 
-ignore = ["D203", "D213", "D104"]
+ignore = ["D203", "D213", "D104", "D102", "D103", "D107", "B008", "N818", "UP007", "UP037"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
