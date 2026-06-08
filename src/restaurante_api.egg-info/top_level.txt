@@ -1,0 +1,6 @@
+api
+core
+database
+main
+repositories
+services
