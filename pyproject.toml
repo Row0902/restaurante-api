@@ -3,7 +3,7 @@ name = "restaurante-api"
 version = "0.1.0"
 description = ""
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 authors = [{ name = "Rowell Urbaez Reyes", email = "urbaez.r.22@gmail.com" }]
 maintainers = [
     { name = "Rowell Urbaez Reyes", email = "urbaez.r.22@gmail.com" },
@@ -40,15 +40,15 @@ line-ending = "auto"
 quote-style = "double"
 
 [tool.ruff.lint]
-extend-select = ["B", "D", "I", "N", "Q", "UP"]
+extend-select = ["E", "F","B", "D", "I", "N", "Q", "UP"]
 
-ignore = ["D203", "D213", "D104"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "D203", "D213", "B008"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ty.environment]
-python-version = "3.14"
+python-version = "3.10"
 root = ["./src"]
 
 [tool.ty.src]
