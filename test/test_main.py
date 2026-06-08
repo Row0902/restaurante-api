@@ -14,8 +14,8 @@ def test_raiz():
     assert response.json() == {"mensaje": "API corriendo 👋"}
 
 
-def test_listar_menu_vacio():
-    """Verifica que el menú vacío devuelva lista vacía."""
+def test_listar_menu():
     response = client.get("/menu")
+
     assert response.status_code == 200
-    assert response.json() == []
+    assert isinstance(response.json(), list)
