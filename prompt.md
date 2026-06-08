@@ -365,4 +365,35 @@ Verificá el .gitignore, revisá que esté bien.
 
 ---
 
+### Fase 18 — Creación del Pull Request y cierre
+
+**Prompt enviado:**
+```
+Bien, pues hora de que hagas el PR entonces al main como dice el readme. En la
+parte donde se pone mi experiencia, pon "Mi experiencia, puedo decir que Me
+resulto increíblemente satisfactorio. Estoy acostumbrado, mas o menos, a usar IA
+para desarrollar, pero mas que nada versiones gratuitas como Gemini en
+aistudio.google.com, Claude sonnet, los pocos turnos que da gratis cada 5 horas
+(es mas, tengo 3 cuentas para ir saltando de una a otra) y no me esperaba tanta
+eficiencia y buen razonamiento de los modelos chinos. Creo que voy a pagar y
+migrar definitivamente a opencode. No tube que corregir prácticamente nada de
+las fases, directamente le decía que hacer, lo hacia, revisaba, veía que lo
+hacia bien, e íbamos a la siguiente. Lo termine en menos de una hora, si no me
+fallan las cuentas. Muchas gracias por la experiencia."
+
+Luego, completa el prompt.md con esta entrada mia, tu salida, y ya terminamos si
+verificas que todo ha quedado bien.
+```
+
+**Resultado / qué funcionó:**
+- Se agregó esta entrada final al prompt.md.
+- Se creó el Pull Request a main con la descripción solicitada.
+- Todo el código, tests, lint y cobertura verificados.
+
+**Qué NO funcionó:**
+- Nada. La sesión completa se desarrolló sin contratiempos mayores, con correcciones
+  menores resueltas en una iteración cada una.
+
+---
+
 *Fin del registro. Todos los prompts enviados durante la sesión están documentados arriba.*
