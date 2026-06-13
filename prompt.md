@@ -349,3 +349,43 @@ No integrar todavia el dominio `core` ni separar routers `api/`; el milestone
 se limito a servicios y repositorios para evitar cambiar reglas actuales.
 
 ---
+
+## Interaccion 8 - Milestone 3: Repositorios async en memoria
+
+Tipo: milestone, pruebas, correccion, validacion
+Alcance: infraestructura temporal de persistencia sin base de datos
+Archivos: `src/repositories/`, `test/unit/repositories/`
+
+Prompt:
+Implementar repositorios async en memoria para menu y ordenes, sin introducir
+base de datos, de forma que sirvan como infraestructura temporal y permitan
+futura sustitucion por SQLModel sin tocar servicios.
+
+Resultado:
+Se endurecieron `InMemoryMenuRepository` e `InMemoryOrdenRepository` con
+almacenamiento opcional, metodos async y copias defensivas. Se agregaron tests
+unitarios de repositorios para persistencia, reemplazo, errores actuales y
+aislamiento de referencias internas.
+
+Que funciono:
+Los servicios conservaron la dependencia contra contratos `Protocol` y no fue
+necesario modificar endpoints ni reglas observables de la API.
+
+Que no funciono / correccion:
+La primera ejecucion uso por error `--runInBand`, bandera de Jest no valida en
+pytest. Luego `ty` detecto casts/anotaciones debiles en tests y se corrigieron
+sin tocar codigo productivo adicional. `uv run ty` fallo por acceso denegado en
+Windows, por lo que se valido con `.venv\Scripts\ty.exe`.
+
+Validacion:
+`uv run pytest test/unit/repositories`: 8 passed.
+`uv run pytest test/unit/repositories test/unit/services test/test_main.py`: 41 passed.
+`uv run ruff check src test`: sin errores.
+`.venv\Scripts\ty.exe check src test`: sin errores.
+`uv run pytest`: 69 passed.
+
+Decision:
+Mantener la persistencia como infraestructura in-memory reemplazable y posponer
+SQLModel/base de datos hasta un milestone explicito.
+
+---
