@@ -270,3 +270,43 @@ Milestone 0 queda reforzado como red de seguridad; el siguiente paso puede
 planificarse sobre el contrato observable ya congelado.
 
 ---
+
+## Interaccion 6 - Milestone 1: Nombrar dominio
+
+Tipo: milestone, refactor, pruebas, validacion
+Alcance: implementacion de dominio puro sin tocar FastAPI
+Archivos: `src/core/`, `test/unit/core/`
+
+Prompt:
+Disenar el core de dominio para plato, orden, item de orden, precio, cantidad y
+estado. Primero proponer archivos, riesgos y tests unitarios; luego implementar
+tras aprobacion, cumpliendo un archivo por clase, funciones cortas, type hints y
+cero dependencias de FastAPI.
+
+Resultado:
+Se agregaron entidades y value objects de dominio: `Plato`, `Orden`,
+`ItemOrden`, `Precio`, `Cantidad`, `EstadoOrden` y `DominioError`, junto con
+tests unitarios puros para reglas de validacion, totales y transiciones.
+
+Que funciono:
+El milestone quedo aislado en `core`, sin modificar `src/main.py` ni la API
+actual. Los tests verifican comportamiento del dominio y ausencia de dependencias
+de `fastapi`, `pydantic` y `sqlmodel` en la capa core.
+
+Que no funciono / correccion:
+`uv` fallo inicialmente por acceso denegado y se reejecuto con permisos. Ruff
+obligo a renombrar la excepcion a `DominioError` y agregar docstrings minimos;
+Ty detecto una union debil en `Precio`, corregida tipando el monto interno como
+`Decimal`.
+
+Validacion:
+`uv run pytest test/unit/core -q`: 28 passed.
+`uv run ruff check src/core test/unit/core`: sin errores.
+`uv run ty check src/core test/unit/core`: sin errores.
+`uv run ruff format --check src/core test/unit/core`: ya formateado.
+
+Decision:
+Mantener el dominio independiente de framework y postergar su integracion con
+FastAPI para milestones posteriores.
+
+---
