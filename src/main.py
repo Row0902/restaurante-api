@@ -6,6 +6,11 @@ Monolito inicial para el curso de AI-Driven Development.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from repositories.in_memory_menu_repository import InMemoryMenuRepository
+from repositories.in_memory_orden_repository import InMemoryOrdenRepository
+from services.menu_service import MenuService
+from services.orden_service import OrdenService
+
 APP_NAME = "Restaurante API"
 APP_VERSION = "0.1.0"
 APP_DESCRIPTION = "API para la gestión de menú y órdenes de un restaurante."
@@ -26,32 +31,35 @@ app.add_middleware(
 
 
 @app.get("/")
-def raiz():
+def raiz() -> dict[str, str]:
     """Endpoint raíz — health check."""
     return {"mensaje": "API corriendo 👋"}
 
 
 # "Base de datos" — un dict en memoria, sin tipos, sin nada
-menu = {}
-ordenes = {}
+menu: dict[str, dict[str, object]] = {}
+ordenes: dict[str, dict[str, object]] = {}
+menu_repository = InMemoryMenuRepository(menu)
+orden_repository = InMemoryOrdenRepository(ordenes)
+menu_service = MenuService(menu_repository)
+orden_service = OrdenService(orden_repository, menu_repository)
 
 
 # --- MENU ---
 
 
 @app.get("/menu", tags=["Menú"])
-def listar_menu():
+async def listar_menu() -> list[dict[str, object]]:
     """Devuelve todos los platos del menú.
 
     Returns:
         list: Lista de platos almacenados en memoria.
     """
-    print("Listando menu...")
-    return list(menu.values())
+    return await menu_service.listar()
 
 
 @app.post("/menu", tags=["Menú"])
-def crear_plato(plato: dict):
+async def crear_plato(plato: dict[str, object]) -> dict[str, object]:
     """Crea un nuevo plato en el menú.
 
     Args:
@@ -60,14 +68,11 @@ def crear_plato(plato: dict):
     Returns:
         dict: Plato creado con ID asignado.
     """
-    id = str(len(menu) + 1)
-    menu[id] = {"id": id, **plato}
-    print(f"Plato creado: {menu[id]}")
-    return menu[id]
+    return await menu_service.crear(plato)
 
 
 @app.get("/menu/{plato_id}", tags=["Menú"])
-def obtener_plato(plato_id: str):
+async def obtener_plato(plato_id: str) -> dict[str, object]:
     """Obtiene un plato por su ID.
 
     Args:
@@ -79,12 +84,14 @@ def obtener_plato(plato_id: str):
     Raises:
         KeyError: Si el plato no existe.
     """
-    print(f"Buscando plato: {plato_id}")
-    return menu[plato_id]
+    return await menu_service.obtener(plato_id)
 
 
 @app.put("/menu/{plato_id}", tags=["Menú"])
-def actualizar_plato(plato_id: str, plato: dict):
+async def actualizar_plato(
+    plato_id: str,
+    plato: dict[str, object],
+) -> dict[str, object]:
     """Actualiza un plato existente.
 
     Args:
@@ -94,13 +101,11 @@ def actualizar_plato(plato_id: str, plato: dict):
     Returns:
         dict: Plato actualizado.
     """
-    menu[plato_id] = {"id": plato_id, **plato}
-    print(f"Plato actualizado: {menu[plato_id]}")
-    return menu[plato_id]
+    return await menu_service.actualizar(plato_id, plato)
 
 
 @app.delete("/menu/{plato_id}", tags=["Menú"])
-def eliminar_plato(plato_id: str):
+async def eliminar_plato(plato_id: str) -> dict[str, object]:
     """Elimina un plato del menú.
 
     Args:
@@ -112,27 +117,24 @@ def eliminar_plato(plato_id: str):
     Raises:
         KeyError: Si el plato no existe.
     """
-    eliminado = menu.pop(plato_id)
-    print(f"Plato eliminado: {eliminado}")
-    return {"mensaje": "Plato eliminado", "id": plato_id}
+    return await menu_service.eliminar(plato_id)
 
 
 # --- ORDENES ---
 
 
 @app.get("/ordenes", tags=["Órdenes"])
-def listar_ordenes():
+async def listar_ordenes() -> list[dict[str, object]]:
     """Devuelve todas las órdenes registradas.
 
     Returns:
         list: Lista de órdenes almacenadas en memoria.
     """
-    print("Listando ordenes...")
-    return list(ordenes.values())
+    return await orden_service.listar()
 
 
 @app.post("/ordenes", tags=["Órdenes"])
-def crear_orden(orden: dict):
+async def crear_orden(orden: dict[str, object]) -> dict[str, object]:
     """Crea una nueva orden con ítems del menú.
 
     Calcula el total automáticamente a partir de los precios del menú.
@@ -146,26 +148,11 @@ def crear_orden(orden: dict):
     Raises:
         KeyError: Si algún plato_id no existe en el menú.
     """
-    id = str(len(ordenes) + 1)
-    total = 0
-    items = orden.get("items", [])
-    for item in items:
-        plato_id = item.get("plato_id")
-        cantidad = item.get("cantidad", 1)
-        plato = menu[plato_id]  # si no existe, explota con 500
-        total += plato["precio"] * cantidad
-    ordenes[id] = {
-        "id": id,
-        "items": items,
-        "total": total,
-        "estado": "pendiente",
-    }
-    print(f"Orden creada: {ordenes[id]}")
-    return ordenes[id]
+    return await orden_service.crear(orden)
 
 
 @app.get("/ordenes/{orden_id}", tags=["Órdenes"])
-def obtener_orden(orden_id: str):
+async def obtener_orden(orden_id: str) -> dict[str, object]:
     """Obtiene una orden por su ID.
 
     Args:
@@ -177,12 +164,14 @@ def obtener_orden(orden_id: str):
     Raises:
         KeyError: Si la orden no existe.
     """
-    print(f"Buscando orden: {orden_id}")
-    return ordenes[orden_id]
+    return await orden_service.obtener(orden_id)
 
 
 @app.put("/ordenes/{orden_id}/estado", tags=["Órdenes"])
-def cambiar_estado_orden(orden_id: str, estado: dict):
+async def cambiar_estado_orden(
+    orden_id: str,
+    estado: dict[str, object],
+) -> dict[str, object]:
     """Cambia el estado de una orden.
 
     Args:
@@ -195,6 +184,4 @@ def cambiar_estado_orden(orden_id: str, estado: dict):
     Raises:
         KeyError: Si la orden no existe.
     """
-    print(f"Cambiando estado de orden {orden_id} a {estado}")
-    ordenes[orden_id]["estado"] = estado.get("estado")
-    return ordenes[orden_id]
+    return await orden_service.cambiar_estado(orden_id, estado)

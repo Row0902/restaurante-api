@@ -310,3 +310,42 @@ Mantener el dominio independiente de framework y postergar su integracion con
 FastAPI para milestones posteriores.
 
 ---
+
+## Interaccion 7 - Milestone 2: Servicios de aplicacion
+
+Tipo: milestone, refactor, pruebas, validacion, decision de alcance
+Alcance: extraccion de casos de uso fuera de endpoints
+Archivos: `src/main.py`, `src/services/`, `src/repositories/`, `test/unit/services/`
+
+Prompt:
+Extraer `MenuService` y `OrdenService` con repositorios inyectados. Los servicios
+no deben depender de FastAPI. Escribir primero tests unitarios con repos
+mockeados y mantener cambios pequenos y reversibles.
+
+Resultado:
+Se movio la logica de menu y ordenes desde `main.py` hacia servicios de
+aplicacion, usando repositorios in-memory inyectados y preservando el contrato
+observable actual de la API.
+
+Que funciono:
+Los tests unitarios de services se escribieron primero con `AsyncMock` y fijaron
+delegacion, creacion, calculo de total, cambio de estado y no persistencia ante
+fallos.
+
+Que no funciono / correccion:
+El primer ciclo de tests fallo por ausencia esperada de `services`, validando el
+flujo TDD. Un parche inicial sobre `main.py` no aplico por diferencias de
+encoding y se corrigio usando contextos mas estables. Ruff aplico un arreglo
+menor automatico.
+
+Validacion:
+`uv run pytest test/unit/services`: 8 passed.
+`uv run pytest test/unit/services test/test_main.py`: 33 passed.
+`uv run pytest`: 61 passed.
+`uv run ruff check src test`: sin errores.
+
+Decision:
+No integrar todavia el dominio `core` ni separar routers `api/`; el milestone
+se limito a servicios y repositorios para evitar cambiar reglas actuales.
+
+---
