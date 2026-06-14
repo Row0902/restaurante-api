@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from core.dominio_error import DominioError
 from core.recurso_no_encontrado_error import RecursoNoEncontradoError
 from services.orden_service import OrdenService
 
@@ -75,18 +76,69 @@ def test_crear_orden_fallida_no_persiste() -> None:
     orden_repo.guardar.assert_not_awaited()
 
 
-def test_cambiar_estado_reemplaza_estado_actual() -> None:
-    """Verifica cambio de estado sin validar valores permitidos."""
+def test_cambiar_estado_valida_transicion_y_persiste() -> None:
+    """Verifica cambio de estado usando reglas de dominio."""
     orden_repo = AsyncMock()
     menu_repo = AsyncMock()
-    orden_repo.obtener.return_value = {"id": "1", "items": [], "estado": "pendiente"}
-    orden_repo.actualizar.return_value = {"id": "1", "items": [], "estado": None}
+    orden_repo.obtener.return_value = {
+        "id": "1",
+        "items": [],
+        "total": 0,
+        "estado": "pendiente",
+    }
+    orden_repo.actualizar.return_value = {
+        "id": "1",
+        "items": [],
+        "total": 0,
+        "estado": "en_preparacion",
+    }
     service = OrdenService(orden_repo, menu_repo)
 
-    resultado = asyncio.run(service.cambiar_estado("1", {}))
+    resultado = asyncio.run(service.cambiar_estado("1", {"estado": "en_preparacion"}))
 
-    assert resultado == {"id": "1", "items": [], "estado": None}
+    assert resultado == {
+        "id": "1",
+        "items": [],
+        "total": 0,
+        "estado": "en_preparacion",
+    }
     orden_repo.actualizar.assert_awaited_once_with(
         "1",
-        {"id": "1", "items": [], "estado": None},
+        {"id": "1", "items": [], "total": 0, "estado": "en_preparacion"},
     )
+
+
+def test_cambiar_estado_rechaza_transicion_invalida() -> None:
+    """Verifica que no se salte la preparacion."""
+    orden_repo = AsyncMock()
+    menu_repo = AsyncMock()
+    orden_repo.obtener.return_value = {
+        "id": "1",
+        "items": [],
+        "total": 0,
+        "estado": "pendiente",
+    }
+    service = OrdenService(orden_repo, menu_repo)
+
+    with pytest.raises(DominioError, match="transicion de estado invalida"):
+        asyncio.run(service.cambiar_estado("1", {"estado": "entregada"}))
+
+    orden_repo.actualizar.assert_not_awaited()
+
+
+def test_cambiar_estado_rechaza_estado_desconocido() -> None:
+    """Verifica rechazo de estados fuera del dominio."""
+    orden_repo = AsyncMock()
+    menu_repo = AsyncMock()
+    orden_repo.obtener.return_value = {
+        "id": "1",
+        "items": [],
+        "total": 0,
+        "estado": "pendiente",
+    }
+    service = OrdenService(orden_repo, menu_repo)
+
+    with pytest.raises(DominioError, match="estado de orden invalido"):
+        asyncio.run(service.cambiar_estado("1", {"estado": "fantasma"}))
+
+    orden_repo.actualizar.assert_not_awaited()

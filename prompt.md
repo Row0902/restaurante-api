@@ -433,3 +433,37 @@ Mantener repositorios en memoria y no introducir DB ni migraciones; el milestone
 se limito a transporte HTTP, schemas, traduccion de errores y pruebas de API.
 
 ---
+
+## Interaccion 10 - Milestone 1: Dominio real en services
+
+Tipo: milestone, refactor, pruebas, validacion
+Alcance: integrar reglas de `core` en services sin tocar repositorios ni DB
+Archivos: `src/services/menu_service.py`, `src/services/orden_service.py`,
+`test/unit/services/`, `test/integration/test_api.py`
+
+Prompt:
+Implementar el Milestone 1 aprobado: `MenuService` y `OrdenService` deben usar
+`core` para validar platos, precios, items, cantidades, ordenes y estados.
+
+Resultado:
+Los services dejaron de aceptar reglas como dicts libres. Ahora rechazan precio
+negativo, nombre vacio, estados desconocidos y `pendiente -> entregada`.
+
+Que funciono:
+El cambio se mantuvo acotado a services y tests, conservando API, routers y
+repositorios in-memory.
+
+Que no funciono / correccion:
+`ty` detecto un tipo demasiado amplio al construir `Precio`; se corrigio
+normalizando el valor a string.
+
+Validacion:
+`uv run pytest`: 62 passed.
+`uv run ruff check`: sin errores.
+`uv run ty check`: sin errores.
+
+Decision:
+Mantener la persistencia como registros serializables, pero mover las reglas de
+negocio efectivas a objetos de dominio.
+
+---

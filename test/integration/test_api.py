@@ -55,7 +55,12 @@ async def test_crud_basico_de_menu(cliente: AsyncClient) -> None:
     assert creado.json() == {"id": "1", **plato}
     assert listado.json() == [creado.json()]
     assert detalle.json() == creado.json()
-    assert actualizado.json() == {"id": "1", "nombre": "Sopa"}
+    assert actualizado.json() == {
+        "id": "1",
+        "nombre": "Sopa",
+        "precio": 12.5,
+        "categoria": "Fuerte",
+    }
     assert eliminado.json() == {"mensaje": "Plato eliminado", "id": "1"}
 
 
@@ -76,6 +81,26 @@ async def test_crear_plato_invalido_devuelve_422(cliente: AsyncClient) -> None:
     response = await cliente.post("/menu", json={"nombre": "Sin precio"})
 
     assert response.status_code == 422
+
+
+async def test_crear_plato_con_precio_negativo_devuelve_400(
+    cliente: AsyncClient,
+) -> None:
+    """Verifica traduccion de error de dominio a 400."""
+    response = await cliente.post("/menu", json={"nombre": "Pizza", "precio": -1})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "precio no puede ser negativo"}
+
+
+async def test_crear_plato_con_nombre_vacio_devuelve_400(
+    cliente: AsyncClient,
+) -> None:
+    """Verifica validacion de nombre desde el dominio."""
+    response = await cliente.post("/menu", json={"nombre": "   ", "precio": 10})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "nombre de plato requerido"}
 
 
 async def test_crear_orden_calcula_total(cliente: AsyncClient) -> None:
@@ -127,15 +152,49 @@ async def test_orden_con_cantidad_invalida_devuelve_422(
     assert response.status_code == 422
 
 
-async def test_cambiar_estado_de_orden(cliente: AsyncClient) -> None:
+async def test_cambiar_estado_de_orden_con_transicion_valida(
+    cliente: AsyncClient,
+) -> None:
     """Verifica cambio de estado desde la capa HTTP."""
     creada = await cliente.post("/ordenes", json={})
 
-    response = await cliente.put("/ordenes/1/estado", json={"estado": "entregado"})
+    preparacion = await cliente.put(
+        "/ordenes/1/estado",
+        json={"estado": "en_preparacion"},
+    )
+    entregada = await cliente.put("/ordenes/1/estado", json={"estado": "entregada"})
 
     assert creada.status_code == 200
-    assert response.status_code == 200
-    assert response.json()["estado"] == "entregado"
+    assert preparacion.status_code == 200
+    assert preparacion.json()["estado"] == "en_preparacion"
+    assert entregada.status_code == 200
+    assert entregada.json()["estado"] == "entregada"
+
+
+async def test_cambiar_estado_rechaza_transicion_directa_a_entregada(
+    cliente: AsyncClient,
+) -> None:
+    """Verifica que la API no salte estados del dominio."""
+    creada = await cliente.post("/ordenes", json={})
+
+    response = await cliente.put("/ordenes/1/estado", json={"estado": "entregada"})
+
+    assert creada.status_code == 200
+    assert response.status_code == 400
+    assert response.json() == {"detail": "transicion de estado invalida"}
+
+
+async def test_cambiar_estado_rechaza_estado_desconocido(
+    cliente: AsyncClient,
+) -> None:
+    """Verifica rechazo de valores fuera del dominio."""
+    creada = await cliente.post("/ordenes", json={})
+
+    response = await cliente.put("/ordenes/1/estado", json={"estado": "fantasma"})
+
+    assert creada.status_code == 200
+    assert response.status_code == 400
+    assert response.json() == {"detail": "estado de orden invalido"}
 
 
 async def test_orden_inexistente_devuelve_404(cliente: AsyncClient) -> None:

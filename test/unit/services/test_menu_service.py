@@ -3,6 +3,9 @@
 import asyncio
 from unittest.mock import AsyncMock
 
+import pytest
+
+from core.dominio_error import DominioError
 from services.menu_service import MenuService
 
 
@@ -37,13 +40,17 @@ def test_crear_plato_asigna_id_y_persiste() -> None:
 def test_actualizar_plato_reemplaza_datos() -> None:
     """Verifica actualizacion completa del plato."""
     repo = AsyncMock()
-    repo.actualizar.return_value = {"id": "9", "nombre": "Sopa"}
+    repo.obtener.return_value = {"id": "9", "nombre": "Pizza", "precio": 10.0}
+    repo.actualizar.return_value = {"id": "9", "nombre": "Sopa", "precio": 10.0}
     service = MenuService(repo)
 
     resultado = asyncio.run(service.actualizar("9", {"nombre": "Sopa"}))
 
-    assert resultado == {"id": "9", "nombre": "Sopa"}
-    repo.actualizar.assert_awaited_once_with("9", {"id": "9", "nombre": "Sopa"})
+    assert resultado == {"id": "9", "nombre": "Sopa", "precio": 10.0}
+    repo.actualizar.assert_awaited_once_with(
+        "9",
+        {"id": "9", "nombre": "Sopa", "precio": 10.0},
+    )
 
 
 def test_eliminar_plato_devuelve_mensaje_actual() -> None:
@@ -56,3 +63,27 @@ def test_eliminar_plato_devuelve_mensaje_actual() -> None:
 
     assert resultado == {"mensaje": "Plato eliminado", "id": "1"}
     repo.eliminar.assert_awaited_once_with("1")
+
+
+def test_crear_plato_rechaza_precio_negativo() -> None:
+    """Verifica validacion de precio desde el dominio."""
+    repo = AsyncMock()
+    repo.listar.return_value = []
+    service = MenuService(repo)
+
+    with pytest.raises(DominioError, match="precio no puede ser negativo"):
+        asyncio.run(service.crear({"nombre": "Pizza", "precio": -1}))
+
+    repo.guardar.assert_not_awaited()
+
+
+def test_crear_plato_rechaza_nombre_vacio() -> None:
+    """Verifica validacion de nombre desde el dominio."""
+    repo = AsyncMock()
+    repo.listar.return_value = []
+    service = MenuService(repo)
+
+    with pytest.raises(DominioError, match="nombre de plato requerido"):
+        asyncio.run(service.crear({"nombre": "   ", "precio": 10}))
+
+    repo.guardar.assert_not_awaited()
