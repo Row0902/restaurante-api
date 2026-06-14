@@ -1,8 +1,8 @@
 """Repositorio en memoria para menu."""
 
 from core.recurso_no_encontrado_error import RecursoNoEncontradoError
+from core.registro import Registro
 from repositories.in_memory_record import copiar_registro
-from repositories.menu_repository import Registro
 
 
 class InMemoryMenuRepository:

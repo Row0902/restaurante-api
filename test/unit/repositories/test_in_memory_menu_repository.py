@@ -6,8 +6,8 @@ from typing import cast
 import pytest
 
 from core.recurso_no_encontrado_error import RecursoNoEncontradoError
+from core.registro import Registro
 from repositories.in_memory_menu_repository import InMemoryMenuRepository
-from repositories.menu_repository import Registro
 
 
 def test_listar_menu_devuelve_registros_guardados() -> None:

@@ -14,6 +14,7 @@ def test_core_no_importa_frameworks():
         "core.orden",
         "core.plato",
         "core.precio",
+        "core.registro",
     ]
 
     for nombre_modulo in modulos:

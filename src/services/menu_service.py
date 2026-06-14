@@ -2,7 +2,8 @@
 
 from core.plato import Plato
 from core.precio import Precio
-from repositories.menu_repository import MenuRepository, Registro
+from core.registro import Registro
+from repositories.menu_repository import MenuRepository
 
 
 class MenuService:

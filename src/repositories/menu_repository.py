@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-Registro = dict[str, object]
+from core.registro import Registro
 
 
 class MenuRepository(Protocol):

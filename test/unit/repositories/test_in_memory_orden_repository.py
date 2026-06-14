@@ -6,8 +6,8 @@ from typing import cast
 import pytest
 
 from core.recurso_no_encontrado_error import RecursoNoEncontradoError
+from core.registro import Registro
 from repositories.in_memory_orden_repository import InMemoryOrdenRepository
-from repositories.orden_repository import Registro
 
 
 def test_listar_ordenes_devuelve_registros_guardados() -> None:

@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 
-from repositories.menu_repository import Registro
+from core.registro import Registro
 
 
 def copiar_registro(registro: Registro) -> Registro:

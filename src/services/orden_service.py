@@ -9,8 +9,9 @@ from core.estado_orden import EstadoOrden
 from core.item_orden import ItemOrden
 from core.orden import Orden
 from core.precio import Precio
+from core.registro import Registro
 from repositories.menu_repository import MenuRepository
-from repositories.orden_repository import OrdenRepository, Registro
+from repositories.orden_repository import OrdenRepository
 
 
 class OrdenService:

@@ -1,8 +1,8 @@
 """Repositorio en memoria para ordenes."""
 
 from core.recurso_no_encontrado_error import RecursoNoEncontradoError
+from core.registro import Registro
 from repositories.in_memory_record import copiar_registro
-from repositories.orden_repository import Registro
 
 
 class InMemoryOrdenRepository:

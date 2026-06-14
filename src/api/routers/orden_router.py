@@ -9,7 +9,6 @@ from api.http_errors import ejecutar_caso_de_uso
 from api.schemas.estado_orden_request import EstadoOrdenRequest
 from api.schemas.orden_request import OrdenRequest
 from api.schemas.orden_response import OrdenResponse
-from repositories.orden_repository import Registro
 from services.orden_service import OrdenService
 
 router = APIRouter(prefix="/ordenes", tags=["Ordenes"])
@@ -19,7 +18,7 @@ OrdenServiceDep = Annotated[OrdenService, Depends(obtener_orden_service)]
 @router.get("", response_model=list[OrdenResponse])
 async def listar_ordenes(
     service: OrdenServiceDep,
-) -> list[Registro]:
+) -> list[dict[str, object]]:
     """Devuelve todas las ordenes registradas."""
     return await ejecutar_caso_de_uso(service.listar())
 
@@ -28,7 +27,7 @@ async def listar_ordenes(
 async def crear_orden(
     orden: OrdenRequest,
     service: OrdenServiceDep,
-) -> Registro:
+) -> dict[str, object]:
     """Crea una nueva orden con items del menu."""
     datos = orden.model_dump()
     return await ejecutar_caso_de_uso(service.crear(datos))
@@ -38,7 +37,7 @@ async def crear_orden(
 async def obtener_orden(
     orden_id: str,
     service: OrdenServiceDep,
-) -> Registro:
+) -> dict[str, object]:
     """Obtiene una orden por su ID."""
     return await ejecutar_caso_de_uso(service.obtener(orden_id))
 
@@ -48,7 +47,7 @@ async def cambiar_estado_orden(
     orden_id: str,
     estado: EstadoOrdenRequest,
     service: OrdenServiceDep,
-) -> Registro:
+) -> dict[str, object]:
     """Cambia el estado de una orden."""
     datos = estado.model_dump()
     return await ejecutar_caso_de_uso(service.cambiar_estado(orden_id, datos))

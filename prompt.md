@@ -467,3 +467,43 @@ Mantener la persistencia como registros serializables, pero mover las reglas de
 negocio efectivas a objetos de dominio.
 
 ---
+
+## Interaccion 11 - Milestone 2: Eliminar saltos de capas
+
+Tipo: milestone, refactor, validacion
+Alcance: arquitectura de imports y fronteras entre capas
+Archivos: `src/api/`, `src/services/`, `src/repositories/`, `src/core/registro.py`,
+`test/unit/test_import_layers.py`
+
+Prompt:
+Eliminar saltos de capas para cumplir estrictamente `api -> services ->
+repositories -> core`: quitar imports de repositorios desde routers, mover
+`Registro` fuera de repositories, revisar `api/http_errors.py` y validar con
+ruff, ty y tests.
+
+Resultado:
+`api` dejo de importar `repositories`, `core`, `Registro`, `InMemory` y
+`SQLModel`. El ensamblado in-memory paso a `services.container`, `Registro` quedo
+en `core.registro` y la API traduce errores de aplicacion.
+
+Que funciono:
+La auditoria previa separo saltos reales de decisiones de frontera. El test
+estatico agregado fija que `api/` no vuelva a depender de infraestructura ni de
+detalles in-memory.
+
+Que no funciono / correccion:
+Ruff corrigio automaticamente 5 detalles de estilo. Luego se ajusto un docstring
+obsoleto de `api/http_errors.py`.
+
+Validacion:
+`uv run ruff check .`: sin errores.
+`uv run ty check`: sin errores.
+`uv run pytest test\unit test\integration --cov=src`: 64 passed, cobertura 99%.
+`uv run pytest test\unit\test_import_layers.py`: 2 passed.
+Auditoria `rg` sobre `src/api`: sin imports/menciones prohibidas.
+
+Decision:
+No aceptar `api -> core` como excepcion para errores; la traduccion de dominio a
+aplicacion queda en `services` y HTTP solo traduce errores de aplicacion.
+
+---
