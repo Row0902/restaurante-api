@@ -619,3 +619,35 @@ Cerrar el milestone con tests por capa y cobertura completa, manteniendo README
 intacto y sin cambios de implementacion.
 
 ---
+
+## Interaccion 15 - Submilestone 6.1: Configuracion .env segun README
+
+Tipo: milestone, correccion, pruebas, validacion
+Alcance: alineamiento de configuracion con README
+Archivos: `src/config.py`, `test/unit/test_config.py`
+
+Prompt:
+Alinear `Config` para que copiar `.env.template` a `.env` sea suficiente para
+cargar `DATABASE_URL`, `APP_NAME` y `DEBUG`, sin tocar README ni `.env` real.
+
+Resultado:
+`Config` ahora lee `.env` con `pydantic-settings` y conserva precedencia de
+variables reales del proceso. Los tests usan `tmp_path` para no leer secretos.
+
+Que funciono:
+El alcance quedo aislado a configuracion y tests unitarios, sin tocar API,
+servicios, dominio, repositorios ni documentacion externa.
+
+Que no funciono / correccion:
+No aplica.
+
+Validacion:
+`uv run pytest test/unit/test_config.py -v`: 3 passed.
+`uv run pytest -v --cov=src --cov-report=term-missing`: 78 passed, cobertura 100%.
+`uv run ruff check src test`: sin errores.
+`uv run ty check src test`: sin errores.
+
+Decision:
+Satisfacer el README desde configuracion, sin modificar README ni `.env` real.
+
+---

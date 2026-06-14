@@ -10,7 +10,7 @@ class Config(BaseSettings):
     debug: bool = False
     database_url: str = "sqlite+aiosqlite:///./restaurante.db"
 
-    model_config = SettingsConfigDict(extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 def cargar_config() -> Config:
