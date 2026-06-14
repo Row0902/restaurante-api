@@ -5,6 +5,7 @@ from typing import cast
 
 import pytest
 
+from core.recurso_no_encontrado_error import RecursoNoEncontradoError
 from repositories.in_memory_menu_repository import InMemoryMenuRepository
 from repositories.menu_repository import Registro
 
@@ -49,9 +50,17 @@ def test_actualizar_menu_reemplaza_registro() -> None:
     assert asyncio.run(repo.listar()) == [{"id": "1", "nombre": "Sopa"}]
 
 
-def test_eliminar_plato_inexistente_propaga_key_error() -> None:
-    """Verifica compatibilidad con el error actual de API."""
+def test_actualizar_plato_inexistente_propaga_error_de_dominio() -> None:
+    """Verifica error de dominio al actualizar recurso inexistente."""
     repo = InMemoryMenuRepository()
 
-    with pytest.raises(KeyError):
+    with pytest.raises(RecursoNoEncontradoError, match="plato no encontrado"):
+        asyncio.run(repo.actualizar("404", {"id": "404", "nombre": "Sopa"}))
+
+
+def test_eliminar_plato_inexistente_propaga_error_de_dominio() -> None:
+    """Verifica error de dominio para recurso inexistente."""
+    repo = InMemoryMenuRepository()
+
+    with pytest.raises(RecursoNoEncontradoError, match="plato no encontrado"):
         asyncio.run(repo.eliminar("404"))

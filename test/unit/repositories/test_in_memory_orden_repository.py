@@ -5,6 +5,7 @@ from typing import cast
 
 import pytest
 
+from core.recurso_no_encontrado_error import RecursoNoEncontradoError
 from repositories.in_memory_orden_repository import InMemoryOrdenRepository
 from repositories.orden_repository import Registro
 
@@ -53,9 +54,9 @@ def test_actualizar_orden_reemplaza_registro() -> None:
     assert asyncio.run(repo.listar()) == [{"id": "1", "estado": "lista"}]
 
 
-def test_obtener_orden_inexistente_propaga_key_error() -> None:
-    """Verifica compatibilidad con el error actual de API."""
+def test_obtener_orden_inexistente_propaga_error_de_dominio() -> None:
+    """Verifica error de dominio para recurso inexistente."""
     repo = InMemoryOrdenRepository()
 
-    with pytest.raises(KeyError):
+    with pytest.raises(RecursoNoEncontradoError, match="orden no encontrada"):
         asyncio.run(repo.obtener("404"))

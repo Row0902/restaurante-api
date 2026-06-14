@@ -1,5 +1,6 @@
 """Repositorio en memoria para menu."""
 
+from core.recurso_no_encontrado_error import RecursoNoEncontradoError
 from repositories.in_memory_record import copiar_registro
 from repositories.menu_repository import Registro
 
@@ -22,13 +23,20 @@ class InMemoryMenuRepository:
 
     async def obtener(self, plato_id: str) -> Registro:
         """Devuelve un plato por ID."""
+        self._asegurar_existencia(plato_id)
         return copiar_registro(self._platos[plato_id])
 
     async def actualizar(self, plato_id: str, plato: Registro) -> Registro:
         """Actualiza un plato."""
+        self._asegurar_existencia(plato_id)
         self._platos[plato_id] = copiar_registro(plato)
         return copiar_registro(self._platos[plato_id])
 
     async def eliminar(self, plato_id: str) -> Registro:
         """Elimina un plato."""
+        self._asegurar_existencia(plato_id)
         return copiar_registro(self._platos.pop(plato_id))
+
+    def _asegurar_existencia(self, plato_id: str) -> None:
+        if plato_id not in self._platos:
+            raise RecursoNoEncontradoError("plato no encontrado")

@@ -389,3 +389,47 @@ Mantener la persistencia como infraestructura in-memory reemplazable y posponer
 SQLModel/base de datos hasta un milestone explicito.
 
 ---
+
+## Interaccion 9 - Milestone 4: Capa API limpia
+
+Tipo: milestone, refactor, pruebas, correccion, validacion
+Alcance: separar FastAPI como capa de transporte
+Archivos: `src/main.py`, `src/api/`, `src/core/recurso_no_encontrado_error.py`,
+`src/repositories/`, `test/integration/test_api.py`, tests unitarios afectados,
+`prompt.md`
+
+Prompt:
+Mover endpoints a routers por recurso, agregar schemas Pydantic, traducir
+excepciones de dominio a `HTTPException`, dejar `main.py` como ensamblador y
+escribir tests de integracion async. Se aprobo primero el plan de implementacion
+y se autorizo usar subagentes si fueran necesarios.
+
+Resultado:
+Se creo la capa `api` con routers de health, menu y ordenes, schemas Pydantic
+por clase, dependencias compartidas y traduccion de errores de dominio. `main.py`
+quedo reducido al ensamblaje de FastAPI, CORS y routers.
+
+Que funciono:
+La separacion `api -> services -> repositories -> core` quedo mas explicita y
+los tests de API pasaron de `TestClient` sincrono a integracion async con
+`ASGITransport`. Los recursos inexistentes ahora responden 404 y payloads
+invalidos se validan en la frontera HTTP.
+
+Que no funciono / correccion:
+Un parche inicial sobre `main.py` fallo por diferencias de encoding y se rehizo
+con reemplazo controlado. Ruff detecto sintaxis generica, `Depends` en defaults
+y nombre de excepcion sin sufijo `Error`; Ty detecto una fixture mal anotada.
+Tambien se corrigio el borde `PUT /menu/{id}` para devolver 404 si el plato no
+existe.
+
+Validacion:
+`uv run pytest`: 54 passed.
+`uv run ruff check src test`: sin errores.
+`uv run ruff format --check src test`: 48 files already formatted.
+`uv run ty check src test`: sin errores.
+
+Decision:
+Mantener repositorios en memoria y no introducir DB ni migraciones; el milestone
+se limito a transporte HTTP, schemas, traduccion de errores y pruebas de API.
+
+---

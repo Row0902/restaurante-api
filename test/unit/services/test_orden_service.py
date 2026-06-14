@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from core.recurso_no_encontrado_error import RecursoNoEncontradoError
 from services.orden_service import OrdenService
 
 
@@ -55,11 +56,11 @@ def test_crear_orden_fallida_no_persiste() -> None:
     orden_repo.listar.return_value = []
     menu_repo.obtener.side_effect = [
         {"id": "1", "precio": 10.0},
-        KeyError("404"),
+        RecursoNoEncontradoError("plato no encontrado"),
     ]
     service = OrdenService(orden_repo, menu_repo)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(RecursoNoEncontradoError, match="plato no encontrado"):
         asyncio.run(
             service.crear(
                 {

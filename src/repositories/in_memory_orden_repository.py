@@ -1,5 +1,6 @@
 """Repositorio en memoria para ordenes."""
 
+from core.recurso_no_encontrado_error import RecursoNoEncontradoError
 from repositories.in_memory_record import copiar_registro
 from repositories.orden_repository import Registro
 
@@ -22,9 +23,15 @@ class InMemoryOrdenRepository:
 
     async def obtener(self, orden_id: str) -> Registro:
         """Devuelve una orden por ID."""
+        self._asegurar_existencia(orden_id)
         return copiar_registro(self._ordenes[orden_id])
 
     async def actualizar(self, orden_id: str, orden: Registro) -> Registro:
         """Actualiza una orden."""
+        self._asegurar_existencia(orden_id)
         self._ordenes[orden_id] = copiar_registro(orden)
         return copiar_registro(self._ordenes[orden_id])
+
+    def _asegurar_existencia(self, orden_id: str) -> None:
+        if orden_id not in self._ordenes:
+            raise RecursoNoEncontradoError("orden no encontrada")
