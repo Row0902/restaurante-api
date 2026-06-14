@@ -50,6 +50,16 @@ def test_actualizar_menu_reemplaza_registro() -> None:
     assert asyncio.run(repo.listar()) == [{"id": "1", "nombre": "Sopa"}]
 
 
+def test_eliminar_plato_devuelve_registro_y_remueve_almacenamiento() -> None:
+    """Verifica eliminacion exitosa de plato en memoria."""
+    repo = InMemoryMenuRepository({"1": {"id": "1", "nombre": "Pizza"}})
+
+    eliminado = asyncio.run(repo.eliminar("1"))
+
+    assert eliminado == {"id": "1", "nombre": "Pizza"}
+    assert asyncio.run(repo.listar()) == []
+
+
 def test_actualizar_plato_inexistente_propaga_error_de_dominio() -> None:
     """Verifica error de dominio al actualizar recurso inexistente."""
     repo = InMemoryMenuRepository()

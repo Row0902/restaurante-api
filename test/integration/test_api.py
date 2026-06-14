@@ -155,6 +155,23 @@ async def test_crear_orden_calcula_total(cliente: AsyncClient) -> None:
     }
 
 
+async def test_orden_persiste_entre_requests(cliente: AsyncClient) -> None:
+    """Verifica que la API lista ordenes persistidas en SQLite."""
+    await cliente.post("/ordenes", json={})
+
+    listado = await cliente.get("/ordenes")
+
+    assert listado.status_code == 200
+    assert listado.json() == [
+        {
+            "id": "1",
+            "items": [],
+            "total": 0.0,
+            "estado": "pendiente",
+        },
+    ]
+
+
 async def test_orden_con_plato_inexistente_devuelve_404(
     cliente: AsyncClient,
 ) -> None:

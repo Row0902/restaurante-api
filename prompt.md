@@ -581,3 +581,41 @@ Eliminar la configuracion acoplada a repositorios y no usar `env_file`; `.env`
 queda fuera de lectura/modificacion.
 
 ---
+
+## Interaccion 14 - Milestone 5: Tests por capa y cobertura final
+
+Tipo: milestone, pruebas, validacion, decision de alcance
+Alcance: cierre de cobertura final sin cambios productivos
+Archivos: `test/integration/test_api.py`,
+`test/unit/repositories/test_in_memory_menu_repository.py`
+
+Prompt:
+Cerrar Milestone 5 con pruebas representativas por capa: core, services,
+repositories y API; cubrir casos borde como transicion invalida, precio negativo,
+platos u ordenes inexistentes y persistencia entre requests. Luego se aprobo
+implementar solo los tests faltantes y no actualizar README.
+
+Resultado:
+La auditoria mostro que el milestone ya tenia 75 tests y 99% de cobertura. Se
+agregaron dos tests puntuales: listado de ordenes persistidas por API y
+eliminacion exitosa en repositorio in-memory de menu.
+
+Que funciono:
+La revision previa evito duplicar casos ya cubiertos y permitio cerrar las dos
+lineas restantes de cobertura sin tocar codigo productivo.
+
+Que no funciono / correccion:
+No aplica. La unica decision de alcance fue excluir la actualizacion de README
+porque conserva las instrucciones originales.
+
+Validacion:
+`uv run pytest -v test\integration\test_api.py test\unit\repositories\test_in_memory_menu_repository.py`: 22 passed.
+`uv run pytest -v --cov=src --cov-report=term-missing`: 77 passed, cobertura 100%.
+`uv run ruff check src test`: sin errores.
+`uv run ty check src test`: sin errores.
+
+Decision:
+Cerrar el milestone con tests por capa y cobertura completa, manteniendo README
+intacto y sin cambios de implementacion.
+
+---
