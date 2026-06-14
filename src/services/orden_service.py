@@ -43,7 +43,9 @@ class OrdenService:
         """Cambia el estado de una orden validando el ciclo de vida."""
         registro = await self._orden_repo.obtener(orden_id)
         orden = self._orden_desde_registro(registro)
-        actualizada = orden.cambiar_estado(self._estado_desde_valor(estado.get("estado")))
+        actualizada = orden.cambiar_estado(
+            self._estado_desde_valor(estado.get("estado"))
+        )
         registro_actualizado = {**registro, "estado": actualizada.estado.value}
         return await self._orden_repo.actualizar(orden_id, registro_actualizado)
 

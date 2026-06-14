@@ -1,0 +1,1 @@
+"""Modelos SQLModel de persistencia."""

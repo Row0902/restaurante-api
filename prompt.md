@@ -507,3 +507,41 @@ No aceptar `api -> core` como excepcion para errores; la traduccion de dominio a
 aplicacion queda en `services` y HTTP solo traduce errores de aplicacion.
 
 ---
+
+## Interaccion 12 - Milestone 3: Persistencia SQLite async
+
+Tipo: milestone, refactor, pruebas, correccion, validacion
+Alcance: implementacion de persistencia SQLModel async con SQLite
+Archivos: `src/repositories/database*.py`, `src/repositories/models/`,
+`src/repositories/sqlmodel_*_repository.py`, `src/services/container.py`,
+`src/main.py`, `test/integration/test_api.py`, `test/unit/repositories/`
+
+Prompt:
+Implementar el plan aprobado para alinear README con SQLModel, SQLAlchemy async
+y SQLite, manteniendo protocolos de repositorio y services sin reglas de negocio
+en modelos SQLModel.
+
+Resultado:
+La API usa repositorios SQLModel por request con `AsyncSession`, crea tablas en
+lifespan y conserva repositorios in-memory como soporte de tests existentes.
+
+Que funciono:
+Los repositorios traducen entre SQLModel y `Registro`, preservan extras de menu y
+persisten ordenes con tabla separada de items.
+
+Que no funciono / correccion:
+La primera relacion ORM con anotaciones diferidas fallo en runtime; se reemplazo
+por consultas explicitas de items. `ty` y `ruff` obligaron a ajustar casts en
+columnas SQLModel.
+
+Validacion:
+`uv run pytest`: 72 passed.
+`uv run ruff check --no-fix src test`: sin errores.
+`uv run ruff format --check src test`: 65 files already formatted.
+`uv run ty check src test`: sin errores.
+
+Decision:
+No tocar `.env`, `prompt.md` fuera de esta entrada, migraciones ni seeds; mantener
+generacion de IDs existente y DB aislada por test.
+
+---

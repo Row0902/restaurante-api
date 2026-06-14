@@ -1,12 +1,23 @@
 """Tests de integracion async para la capa API."""
 
-from collections.abc import AsyncIterator, Generator
+from collections.abc import AsyncIterator
+from pathlib import Path
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from api.dependencies import limpiar_estado_en_memoria
+from api.dependencies import obtener_menu_service, obtener_orden_service
 from main import app
+from repositories.database import (
+    construir_engine,
+    construir_session_maker,
+    crear_tablas,
+)
+from services.container import construir_menu_service, construir_orden_service
+from services.menu_service import MenuService
+from services.orden_service import OrdenService
 
 pytestmark = pytest.mark.anyio
 
@@ -17,20 +28,46 @@ def anyio_backend() -> str:
     return "asyncio"
 
 
-@pytest.fixture(autouse=True)
-def estado_limpio() -> Generator[None]:
-    """Aisla el almacenamiento in-memory entre tests."""
-    limpiar_estado_en_memoria()
-    yield
-    limpiar_estado_en_memoria()
+def sqlite_url(path: Path) -> str:
+    """Construye URL SQLite async para un archivo temporal."""
+    return f"sqlite+aiosqlite:///{path.as_posix()}"
 
 
 @pytest.fixture
-async def cliente() -> AsyncIterator[AsyncClient]:
+async def cliente(tmp_path: Path) -> AsyncIterator[AsyncClient]:
     """Cliente HTTP async contra la app ASGI."""
+    engine = construir_engine(sqlite_url(tmp_path / "api.db"))
+    session_maker = construir_session_maker(engine)
+    await crear_tablas(engine)
+    _configurar_overrides(session_maker)
     transporte = ASGITransport(app=app)
     async with AsyncClient(transport=transporte, base_url="http://test") as client:
         yield client
+    app.dependency_overrides.clear()
+    await engine.dispose()
+
+
+def _configurar_overrides(
+    session_maker: async_sessionmaker[AsyncSession],
+) -> None:
+    app.dependency_overrides[obtener_menu_service] = _menu_override(session_maker)
+    app.dependency_overrides[obtener_orden_service] = _orden_override(session_maker)
+
+
+def _menu_override(session_maker: async_sessionmaker[AsyncSession]):
+    async def override() -> AsyncIterator[MenuService]:
+        async with session_maker() as session:
+            yield construir_menu_service(session)
+
+    return override
+
+
+def _orden_override(session_maker: async_sessionmaker[AsyncSession]):
+    async def override() -> AsyncIterator[OrdenService]:
+        async with session_maker() as session:
+            yield construir_orden_service(session)
+
+    return override
 
 
 async def test_raiz(cliente: AsyncClient) -> None:
@@ -62,6 +99,15 @@ async def test_crud_basico_de_menu(cliente: AsyncClient) -> None:
         "categoria": "Fuerte",
     }
     assert eliminado.json() == {"mensaje": "Plato eliminado", "id": "1"}
+
+
+async def test_menu_persiste_entre_requests(cliente: AsyncClient) -> None:
+    """Verifica que la API persiste menu en SQLite entre requests."""
+    await cliente.post("/menu", json={"nombre": "Pizza", "precio": 10})
+
+    listado = await cliente.get("/menu")
+
+    assert listado.json() == [{"id": "1", "nombre": "Pizza", "precio": 10}]
 
 
 async def test_plato_inexistente_devuelve_404(cliente: AsyncClient) -> None:

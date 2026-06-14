@@ -1,31 +1,35 @@
 """Ensamblado de servicios de aplicacion."""
 
-from core.registro import Registro
-from repositories.in_memory_menu_repository import InMemoryMenuRepository
-from repositories.in_memory_orden_repository import InMemoryOrdenRepository
+from collections.abc import AsyncIterator
+
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from repositories.database import obtener_sesion
+from repositories.sqlmodel_menu_repository import SqlModelMenuRepository
+from repositories.sqlmodel_orden_repository import SqlModelOrdenRepository
 from services.menu_service import MenuService
 from services.orden_service import OrdenService
 
-menu: dict[str, Registro] = {}
-ordenes: dict[str, Registro] = {}
 
-menu_repository = InMemoryMenuRepository(menu)
-orden_repository = InMemoryOrdenRepository(ordenes)
-menu_service = MenuService(menu_repository)
-orden_service = OrdenService(orden_repository, menu_repository)
+def construir_menu_service(session: AsyncSession) -> MenuService:
+    """Construye servicio de menu con repositorio SQLModel."""
+    return MenuService(SqlModelMenuRepository(session))
 
 
-def obtener_menu_service() -> MenuService:
+def construir_orden_service(session: AsyncSession) -> OrdenService:
+    """Construye servicio de ordenes con repositorios SQLModel."""
+    menu_repository = SqlModelMenuRepository(session)
+    orden_repository = SqlModelOrdenRepository(session)
+    return OrdenService(orden_repository, menu_repository)
+
+
+async def obtener_menu_service() -> AsyncIterator[MenuService]:
     """Devuelve el servicio de menu configurado."""
-    return menu_service
+    async for session in obtener_sesion():
+        yield construir_menu_service(session)
 
 
-def obtener_orden_service() -> OrdenService:
+async def obtener_orden_service() -> AsyncIterator[OrdenService]:
     """Devuelve el servicio de ordenes configurado."""
-    return orden_service
-
-
-def limpiar_estado_en_memoria() -> None:
-    """Limpia el almacenamiento en memoria para tests."""
-    menu.clear()
-    ordenes.clear()
+    async for session in obtener_sesion():
+        yield construir_orden_service(session)
