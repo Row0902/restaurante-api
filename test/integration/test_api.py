@@ -5,19 +5,9 @@ from pathlib import Path
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlmodel.ext.asyncio.session import AsyncSession
 
-from api.dependencies import obtener_menu_service, obtener_orden_service
-from main import app
-from repositories.database import (
-    construir_engine,
-    construir_session_maker,
-    crear_tablas,
-)
-from services.container import construir_menu_service, construir_orden_service
-from services.menu_service import MenuService
-from services.orden_service import OrdenService
+from config import Config
+from main import crear_app
 
 pytestmark = pytest.mark.anyio
 
@@ -36,38 +26,30 @@ def sqlite_url(path: Path) -> str:
 @pytest.fixture
 async def cliente(tmp_path: Path) -> AsyncIterator[AsyncClient]:
     """Cliente HTTP async contra la app ASGI."""
-    engine = construir_engine(sqlite_url(tmp_path / "api.db"))
-    session_maker = construir_session_maker(engine)
-    await crear_tablas(engine)
-    _configurar_overrides(session_maker)
-    transporte = ASGITransport(app=app)
-    async with AsyncClient(transport=transporte, base_url="http://test") as client:
-        yield client
-    app.dependency_overrides.clear()
-    await engine.dispose()
+    app = crear_app(_config(tmp_path / "api.db"))
+    async with app.router.lifespan_context(app):
+        transporte = ASGITransport(app=app)
+        async with AsyncClient(transport=transporte, base_url="http://test") as client:
+            yield client
 
 
-def _configurar_overrides(
-    session_maker: async_sessionmaker[AsyncSession],
-) -> None:
-    app.dependency_overrides[obtener_menu_service] = _menu_override(session_maker)
-    app.dependency_overrides[obtener_orden_service] = _orden_override(session_maker)
+def _config(path: Path) -> Config:
+    return Config(
+        app_name="Restaurante API Test",
+        debug=True,
+        database_url=sqlite_url(path),
+    )
 
 
-def _menu_override(session_maker: async_sessionmaker[AsyncSession]):
-    async def override() -> AsyncIterator[MenuService]:
-        async with session_maker() as session:
-            yield construir_menu_service(session)
+async def test_app_arranca_con_configuracion_de_test(tmp_path: Path) -> None:
+    """Verifica ensamblaje con configuracion inyectada."""
+    database_path = tmp_path / "startup.db"
+    app = crear_app(_config(database_path))
 
-    return override
-
-
-def _orden_override(session_maker: async_sessionmaker[AsyncSession]):
-    async def override() -> AsyncIterator[OrdenService]:
-        async with session_maker() as session:
-            yield construir_orden_service(session)
-
-    return override
+    async with app.router.lifespan_context(app):
+        assert app.title == "Restaurante API Test"
+        assert app.debug is True
+        assert database_path.exists()
 
 
 async def test_raiz(cliente: AsyncClient) -> None:

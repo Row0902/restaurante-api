@@ -1,12 +1,8 @@
 """Infraestructura de base de datos async."""
 
-from collections.abc import AsyncIterator
-
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
-
-from repositories.database_settings import DatabaseSettings
 
 
 def construir_engine(database_url: str) -> AsyncEngine:
@@ -33,14 +29,3 @@ async def crear_tablas(engine: AsyncEngine) -> None:
     importar_modelos()
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
-
-
-async def obtener_sesion() -> AsyncIterator[AsyncSession]:
-    """Entrega una sesion async por request."""
-    async with session_maker() as session:
-        yield session
-
-
-settings = DatabaseSettings()
-engine = construir_engine(settings.database_url)
-session_maker = construir_session_maker(engine)

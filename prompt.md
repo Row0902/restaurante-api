@@ -545,3 +545,39 @@ No tocar `.env`, `prompt.md` fuera de esta entrada, migraciones ni seeds; manten
 generacion de IDs existente y DB aislada por test.
 
 ---
+
+## Interaccion 13 - Milestone 4: Configuracion y ensamblaje real
+
+Tipo: milestone, refactor, pruebas, validacion
+Alcance: configuracion de aplicacion y composition root de FastAPI
+Archivos: `src/config.py`, `src/main.py`, `src/api/dependencies.py`,
+`src/services/container.py`, `src/repositories/database.py`,
+`test/integration/test_api.py`, `test/unit/test_config.py`
+
+Prompt:
+Implementar Milestone 4 para que FastAPI arranque con configuracion real:
+`DATABASE_URL`, `APP_NAME`, `DEBUG`, repositorios SQLModel desde dependencias,
+startup/lifespan para preparar DB y sin leer ni modificar `.env`.
+
+Resultado:
+Se agrego `Config` con `pydantic-settings`, `crear_app(config)` como factory,
+engine/session maker por aplicacion y DB temporal para tests de integracion.
+
+Que funciono:
+La configuracion se puede inyectar en tests sin secretos y `app = crear_app()`
+mantiene compatible `fastapi dev src/main.py`.
+
+Que no funciono / correccion:
+Ruff aplico un autofix menor de formato/imports. Un chequeo manual con
+`uv run python -c ...` fue bloqueado por permisos del entorno.
+
+Validacion:
+`uv run pytest`: 75 passed.
+`uv run ruff check src test`: sin errores.
+`uv run ty check`: sin errores.
+
+Decision:
+Eliminar la configuracion acoplada a repositorios y no usar `env_file`; `.env`
+queda fuera de lectura/modificacion.
+
+---
