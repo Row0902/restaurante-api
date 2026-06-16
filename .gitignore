@@ -30,3 +30,8 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+
+# Coverage artifacts
+.coverage
+
+.coverage

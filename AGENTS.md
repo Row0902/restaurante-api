@@ -1,21 +1,89 @@
-# Code Review Rules
+# Restaurante API — Agent Guide
 
-## Reglas obligatorias de diseño
+## Project nature
 
-| # | Regla | Descripción |
-|---|-------|-------------|
-| 1 | **Validación polimórfica** | Usar polimorfismo para validar — no condicionales (`if`/`match`) que pregunten el tipo. Cada variante implementa su propio método de validación. |
-| 2 | **Máximo 500 líneas por archivo** | Ningún archivo del proyecto debe exceder las 500 líneas de código fuente (sin contar blanks/comentarios). |
-| 3 | **Un archivo por clase** | Cada clase vive en su propio archivo. Sin excepciones. El nombre del archivo debe coincidir con el nombre de la clase en snake_case. |
-| 4 | **Separación en capas** | `api/` → `services/` → `repositories/` → `core/`. La dependencia es unidireccional. Ninguna capa superior puede saltarse una capa intermedia. |
-| 5 | **Clean Code** | Nombres que revelen intención, funciones que hagan una sola cosa, sin comentarios que expliquen el qué (el código debe explicarse solo), sin valores hardcodeados. |
-| 6 | **SRP (Single Responsibility Principle)** | Cada clase/modulo debe tener una única razón para cambiar. Si una clase tiene más de una responsabilidad, dividir. |
-| 7 | **Clean Architecture** | Reglas de negocio independientes de frameworks, UI, DB y agentes externos. Los detalles dependen de las abstracciones, no al revés. Inversión de dependencias en los límites de capa. |
-| 8 | **Funciones ≤ 20 líneas** | Ninguna función/método debe exceder las 20 líneas de código (cuerpo, sin firma ni docstring). Si lo hace, extraer sub-funciones. |
-| 9 | **Clases ≤ 10 métodos públicos** | Ninguna clase debe exponer más de 10 métodos públicos. Si los supera, extraer responsabilidades en clases separadas. |
-| 10 | **Tests primero (TDD)** | Toda función nueva o modificada debe tener test que la respalde. No se acepta código sin test. |
-| 11 | **Test por capa** | Services → unitarios con repos mockeados. API → integración con cliente HTTP. Core → unitarios puros. No mezclar responsabilidades de testeo. |
-| 12 | **Cobertura ≥ 80%** | El reporte de cobertura debe mostrar al menos 80% en `src/`. Si baja, no se mergea. |
-| 13 | **Type hints en toda función pública** | Toda función/método público debe tener tipos en parámetros y retorno. `Any` solo como último recurso y justificado. |
-| 14 | **Async first** | Toda operación de I/O (DB, HTTP, filesystem) debe ser async/await. No mezclar funciones sync con async en la misma cadena de llamadas. |
-| 15 | **Manejo de errores consistente** | Usar excepciones de dominio propias en `core/`. La capa `api/` las traduce a HTTPException con código y mensaje descriptivo. Prohibido dejar 500 genéricos por errores no controlados. |
+This is a **course project** (AI-Driven Development). The repo starts as a deliberate spaghetti monolith in `src/main.py` with bad practices. Students refactor incrementally toward Clean Architecture. The current state is **intentionally bad** — do not treat it as an example to follow.
+
+- Python 3.14 (see `.python-version`)
+- Package manager: `uv` (has `uv.lock`, `.envrc` uses `layout uv`)
+- Stack: FastAPI / SQLModel / SQLite+aiosqlite / Pydantic v2 / pydantic-settings
+
+## Developer commands
+
+```bash
+uv sync                          # Install dependencies (creates/updates .venv)
+cp .env.template .env            # Configuration (required before running)
+fastapi dev src/main.py          # Dev server with hot reload
+
+pytest -v                        # All tests
+pytest -v --cov=src --cov-report=term-missing   # With coverage
+pytest -v test/unit              # Unit tests only
+pytest -v test/integration       # Integration tests only
+
+ruff check src/ test/            # Lint
+ruff check --fix src/ test/      # Auto-fix
+ruff format src/ test/           # Format
+ruff format --check src/ test/   # Check format only
+
+ty check src/ test/              # Type checks
+
+pre-commit run --all-files       # Manually run all hooks
+```
+
+## Testing quirks
+
+- `pythonpath = ["src"]` in `pyproject.toml` — test imports are relative to `src/`, not project root
+- `testpaths = ["test"]` — pytest only discovers tests in `test/`
+- Current tests use `TestClient` (sync). Target state uses `httpx` `ASGITransport` (async)
+- CWD matters: test and dev server expect `.env` at project root
+
+## Architecture roadmap
+
+| Layer | Current | Target |
+|-------|---------|--------|
+| **api/** | — (all in `main.py`) | Routers, deps, HTTP layer |
+| **services/** | — | Business logic, receives repos via constructor |
+| **repositories/** | — | DB access layer |
+| **core/** | — | SQLModel models, Pydantic schemas, pydantic-settings config |
+
+Design principle: `api → services → repositories → core` — one-way dependency. No layer skips the next.
+
+## ruff & ty config (pyproject.toml)
+
+- Line length: 88
+- Quotes: double
+- Docstring convention: Google
+- Target: py314
+- Lint extras: B, D, I, N, Q, UP (with D203/D213/D104 ignored)
+- pre-commit hooks run both `ruff check --fix` and `ruff-format`
+- ty type-checks both `src/` and `test/`, python-version 3.14
+- ruff fix is enabled by default
+
+## Mandatory design rules
+
+These are course constraints — they apply to ALL code written or reviewed in this repo.
+
+| # | Rule | Description |
+|---|------|-------------|
+| 1 | **Validación polimórfica** | Use polymorphism for validation — no `if`/`match` on type. Each variant implements its own validate method. |
+| 2 | **Máximo 500 líneas por archivo** | No file exceeds 500 source lines (excluding blanks/comments). |
+| 3 | **Una clase por archivo** | One class per file, filename matches class name in snake_case. No exceptions. |
+| 4 | **Separación en capas** | `api/` → `services/` → `repositories/` → `core/`. One-way dependency. No layer skipping. |
+| 5 | **Clean Code** | Intention-revealing names, one thing per function, no comments explaining what (code must self-document), no hardcoded values. |
+| 6 | **SRP** | One reason to change per class/module. Split if it has more than one. |
+| 7 | **Clean Architecture** | Business rules independent of frameworks, UI, DB, and external agents. Dependencies point inward. Dependency inversion at layer boundaries. |
+| 8 | **Funciones ≤ 20 líneas** | No function/method body exceeds 20 lines (signature and docstring excluded). Extract sub-functions. |
+| 9 | **Clases ≤ 10 métodos públicos** | No class exposes more than 10 public methods. Extract responsibilities. |
+| 10 | **TDD** | Every new or modified function must have a supporting test. No code without tests. |
+| 11 | **Test por capa** | Services → unit tests with mocked repos. API → integration tests with HTTP client. Core → pure unit tests. Do not mix test responsibilities. |
+| 12 | **Cobertura ≥ 80%** | Coverage report must show at least 80% on `src/`. No merge below that. |
+| 13 | **Type hints en toda función pública** | All public functions/methods must have typed params and return. `Any` only as last resort and justified. |
+| 14 | **Async first** | All I/O (DB, HTTP, filesystem) must be async/await. Do not mix sync and async in the same call chain. |
+| 15 | **Manejo de errores consistente** | Use domain exceptions in `core/`. API layer translates to HTTPException with descriptive code/message. No bare 500s from unhandled errors. |
+
+## Environment
+
+- `.env` at project root — copy from `.env.template`
+- `DATABASE_URL=sqlite+aiosqlite:///./restaurante.db` — local SQLite file
+- `.envrc` uses `layout uv` — for direnv users, auto-activates uv-managed venv
+- `.gitignore` excludes: `.env`, `.venv/`, `*.db`, `__pycache__/`, `.atl/`, `.engram/`

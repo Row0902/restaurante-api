@@ -1,0 +1,85 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Python 3.14, FastAPI, SQLModel, SQLite+aiosqlite, Pydantic v2, pydantic-settings
+  Package manager: uv (uv.lock present, .envrc uses layout uv)
+  Architecture: Deliberate spaghetti monolith in src/main.py (course project) — refactoring toward Clean Architecture
+  Layer roadmap: api/ → services/ → repositories/ → core/ (one-way dependency)
+  Testing: pytest with pytest-cov, testpaths=["test"], pythonpath=["src"]
+  Linter: ruff (B, D, I, N, Q, UP), line-length 88, Google docstrings
+  Type checker: ty (python-version 3.14, checks src/ and test/)
+  Pre-commit: ruff-check --fix + ruff-format
+  CI: None yet
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: true
+    test_command: "pytest -v"
+  verify:
+    test_command: "pytest -v --cov=src --cov-report=term-missing"
+    build_command: "ty check src/ test/"
+    coverage_threshold: 80
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  runner: pytest
+  testpaths:
+    - test
+  pythonpath:
+    - src
+  coverage_tool: pytest-cov
+  coverage_threshold: 80
+  current_test_style: sync (TestClient)
+  target_test_style: async (httpx ASGITransport)
+  layers:
+    - unit: test/unit/ (mocked repos)
+    - integration: test/integration/ (HTTP client)
+    - core: test/ (pure unit tests)
+  not_implemented_yet:
+    - test/unit/
+    - test/integration/
+
+strict_tdd: true
+
+design_constraints:
+  max_file_lines: 500
+  one_class_per_file: true
+  max_function_lines: 20
+  max_public_methods_per_class: 10
+  polymorphic_validation: true
+  async_first: true
+  type_hints_required: true
+  error_handling: domain exceptions in core/, HTTPException at api layer
+
+archived_changes:
+  - name: menu-refactor
+    archived_at: "2026-06-16"
+    archive_path: openspec/changes/archive/2026-06-16-menu-refactor/
+    summary: "Extracted menu endpoint from monolithic main.py into Clean Architecture layers (core → repositories → services → api). 80/80 tests pass, 86% coverage, 21 task phases completed."
+    spec_domains:
+      - core/menu
+      - repositories/menu
+      - services/menu
+      - api/menu
+  - name: orders-refactor
+    archived_at: "2026-06-16"
+    archive_path: openspec/changes/archive/2026-06-16-orders-refactor/
+    summary: "Extracted orders CRUD from monolithic main.py into Clean Architecture layers (core → repositories → services → api). Cross-domain MenuRepository injection for price lookup. 176 tests pass, all tasks completed across 3 chained PRs."
+    spec_domains:
+      - core/orden
+      - repositories/orden
+      - services/orden
+      - api/orden

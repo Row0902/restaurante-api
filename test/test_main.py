@@ -1,4 +1,4 @@
-"""Tests para la API de restaurante."""
+"""Tests for the root API endpoint."""
 
 from fastapi.testclient import TestClient
 
@@ -12,10 +12,3 @@ def test_raiz():
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"mensaje": "API corriendo 👋"}
-
-
-def test_listar_menu_vacio():
-    """Verifica que el menú vacío devuelva lista vacía."""
-    response = client.get("/menu")
-    assert response.status_code == 200
-    assert response.json() == []
