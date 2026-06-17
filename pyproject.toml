@@ -19,6 +19,7 @@ dependencies = [
 dev = [
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
     "ty>=0.0.34",
@@ -57,7 +58,11 @@ include = ["src", "test"]
 [tool.ty.terminal]
 output-format = "concise"
 
+[tool.fastapi-cli]
+app = "main:app"
+
 [tool.pytest.ini_options]
 addopts = "-ra -q"
 pythonpath = ["src"]
 testpaths = ["test"]
+asyncio_mode = "auto"
