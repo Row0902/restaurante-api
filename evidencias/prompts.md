@@ -74,4 +74,16 @@ Fecha de inicio: 17/06/2026
                Continúa con la Iteración 5 (servicios con inyección de repositorios)                                             
 
                ## Respuesta
-               
+- Creación de MenuService
+- Creación de OrdenesService
+- Inyección de AbstractMenuRepository
+- Tests unitarios de servicios
+- 139 tests pasando
+
+# Prompt 10
+
+Continúa con                     la Iteración 6 (La capa API + integración final. Es el último paso que conecta los services con FastAPI,        │ reemplaza el monolito, y añade los exception handlers)
+
+## Respuesta
+
+     src/main.py    │Reescrito: FastAPI con lifespan asíncrono, init_db en startup, engine.dispose() en shutdown,   │       │               │routers incluidos                                                                              │       └───────────────┴───────────────────────────────────────────────────────────────────────────────────────────────┘                                                                                                                               ✅ Iteración 7 — Tests de integración (25 tests)                                                                                                                                                                                                test/test_main.py migrado a la app refactorizada con:                                                                                                                                                                                           - Motor SQLite en memoria aislado vía app.dependency_overrides (sin contaminar otros tests)                             - Limpieza entre tests con DELETE FROM "table" (comillas dobles por keyword order)                                      - Mejoras documentadas: IDs enteros, errores 404/400/422 estructurados, validación de transiciones de estado                                                                                                                                    Resultado final                                                                                                                                                                                                                                 139 passed in 3.06s                                                                                                                                                                                                                             15 reglas de AGENTS.md cumplidas, 7 iteraciones completadas, monolito transformado a Clean Architecture.                                                                                                                                        ¿Quieres que haga el commit o prefieres revisar algo antes?                                                         
