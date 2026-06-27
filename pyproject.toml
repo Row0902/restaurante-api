@@ -15,6 +15,10 @@ dependencies = [
     "pydantic-settings>=2.0",
     "sqlmodel>=0.0.38",
 ]
+
+[project.scripts]
+clean = "clean_project:main"
+
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.0",
@@ -23,6 +27,9 @@ dev = [
     "ruff>=0.15.12",
     "ty>=0.0.34",
 ]
+
+[tool.setuptools]
+py-modules = ["clean_project"]
 
 [tool.ruff]
 fix = true
