@@ -1,0 +1,252 @@
+# Restaurante API
+
+API asíncrona para la gestión de menú y órdenes de un restaurante, parte de un curso de **AI-Driven Development**. Los alumnos parten de un monolito con malas prácticas deliberadas y lo refactorizan incrementalmente con ayuda de IA hasta alcanzar **Clean Architecture** y **Clean Code**.
+
+## Arranque rápido
+
+### Con uv (recomendado)
+
+```bash
+uv sync                          # 1. Instalar dependencias
+cp .env.template .env            # 2. Configurar variables de entorno
+fastapi dev src/main.py          # 3. Servidor de desarrollo
+```
+
+### Con pip (sin uv)
+
+```bash
+python -m venv .venv             # 1. Crear entorno virtual
+source .venv/bin/activate        #    Linux / macOS
+# .venv\Scripts\activate         #    Windows
+pip install -e .                 # 2. Instalar dependencias
+cp .env.template .env            # 3. Configurar variables
+fastapi dev src/main.py          # 4. Servidor de desarrollo
+```
+
+## Endpoints
+
+### Menú
+
+| Método   | Ruta         | Descripción                            |
+| -------- | ------------ | -------------------------------------- |
+| `GET`    | `/menu`      | Listar platos (con filtros opcionales) |
+| `POST`   | `/menu`      | Crear plato                            |
+| `GET`    | `/menu/{id}` | Obtener plato por ID                   |
+| `PUT`    | `/menu/{id}` | Actualizar plato                       |
+| `DELETE` | `/menu/{id}` | Eliminar plato                         |
+
+### Órdenes
+
+| Método | Ruta                   | Descripción                                     |
+| ------ | ---------------------- | ----------------------------------------------- |
+| `GET`  | `/ordenes`             | Listar órdenes                                  |
+| `POST` | `/ordenes`             | Crear orden (con ítems del menú, calcula total) |
+| `GET`  | `/ordenes/{id}`        | Obtener orden por ID                            |
+| `PUT`  | `/ordenes/{id}/estado` | Cambiar estado de orden                         |
+
+### Raíz
+
+| Método | Ruta | Descripción  |
+| ------ | ---- | ------------ |
+| `GET`  | `/`  | Health check |
+
+## Stack
+
+| Capa               | Tecnología                                  |
+| ------------------ | ------------------------------------------- |
+| Framework          | FastAPI (fully async)                       |
+| ORM                | SQLModel + SQLAlchemy (async)               |
+| Base de datos      | SQLite                                      |
+| Validación         | Pydantic v2                                 |
+| Configuración      | `.env` + `pydantic-settings`                |
+| Testing            | pytest + pytest-cov + httpx (ASGITransport) |
+| Linting + formateo | ruff (Astral — opcional, recomendado)       |
+| Type checking      | ty (Astral — opcional, recomendado)         |
+
+## Diagramas de flujo
+
+### Estado inicial — monolito spaghetti
+
+```
+Request HTTP
+    │
+    ▼
+┌─────────────────────────┐
+│      main.py (monolito)   │
+│                          │
+│  @app.get("/")          │──► Health check
+│  @app.get("/menu")      │──► dict global "menu" (memoria)
+│  @app.post("/menu")     │──► print() suelto
+│  @app.put("/menu")      │──► sin validación
+│  @app.delete("/menu")   │──► sin manejo de errores
+│                          │──► CORS abierto a *
+│  @app.get("/ordenes")   │──► lógica de negocio
+│  @app.post("/ordenes")  │     mezclada con HTTP
+│  @app.put("/ordenes")   │──► cálculo de total inline
+│                          │
+└─────────────────────────┘
+    │
+    ▼
+Response HTTP (o 500 pelado)
+```
+
+**Problemas:** una sola capa, acoplamiento total, imposible testear unitariamente, sin separación de responsabilidades.
+
+### Estado esperado — Clean Architecture
+
+```
+Request HTTP
+    │
+    ▼
+┌──────────────────────────────────────────────────────┐
+│  src/api/          — Capa de presentación             │
+│  ┌────────────┐  ┌──────────────┐  ┌────────────┐   │
+│  │ menu.py    │  │ ordenes.py   │  │ deps.py     │   │
+│  │ Router     │  │ Router       │  │ DB session  │   │
+│  │ GET POST   │  │ GET POST     │  │ Settings    │   │
+│  │ PUT DELETE │  │ PATCH        │  │ inyectables │   │
+│  └─────┬──────┘  └──────┬───────┘  └────────────┘   │
+└────────┼────────────────┼────────────────────────────┘
+         │                │
+         ▼                ▼
+┌──────────────────────────────────────────────────────┐
+│  src/services/     — Capa de aplicación               │
+│  ┌──────────────────┐  ┌────────────────────────┐    │
+│  │ menu.py          │  │ ordenes.py             │    │
+│  │ crear(lista)     │  │ crear(items)           │    │
+│  │ obtener(id)      │  │ calcular_total(items)  │    │
+│  │ actualizar(id,d) │  │ cambiar_estado(id, e)  │    │
+│  │ eliminar(id)     │  │                        │    │
+│  └────────┬─────────┘  └───────────┬────────────┘    │
+└───────────┼────────────────────────┼─────────────────┘
+            │                        │
+            ▼                        ▼
+┌──────────────────────────────────────────────────────┐
+│  src/repositories/ — Capa de infraestructura          │
+│  ┌──────────────────┐  ┌────────────────────────┐    │
+│  │ menu.py          │  │ ordenes.py             │    │
+│  │ get_all()        │  │ get_all()              │    │
+│  │ get_by_id(id)    │  │ get_by_id(id)          │    │
+│  │ add(plato)       │  │ add(orden)             │    │
+│  │ update(id, data) │  │ update_estado(id, e)   │    │
+│  │ delete(id)       │  │                        │    │
+│  └────────┬─────────┘  └───────────┬────────────┘    │
+└───────────┼────────────────────────┼─────────────────┘
+            │                        │
+            ▼                        ▼
+┌──────────────────────────────────────────────────────┐
+│  src/core/         — Capa de dominio                  │
+│  ┌────────────┐  ┌──────────────┐  ┌────────────┐   │
+│  │ models.py  │  │ schemas.py  │  │ config.py   │   │
+│  │ SQLModel   │  │ Pydantic v2 │  │ .env        │   │
+│  │ tablas DB  │  │ req/res val │  │ pydantic-   │   │
+│  │            │  │             │  │ settings    │   │
+│  └────────────┘  └──────────────┘  └────────────┘   │
+└──────────────────────────────────────────────────────┘
+            │
+            ▼
+┌──────────────────────────────────────────────────────┐
+│  SQLite (archivo restaurante.db)                      │
+└──────────────────────────────────────────────────────┘
+```
+
+**Principios aplicados:**
+- Dependencia unidireccional: `api → services → repositories → core`
+- Inversión de dependencias: services reciben repositorios por constructor
+- Ningún detalle de infraestructura (DB, HTTP) en la capa de dominio
+- Schemas separados de modelos de DB
+- Todas las operaciones de DB son asíncronas (`await repo.get_all()`)
+
+## Testing
+
+**10 tests en total:**
+- **5 tests unitarios** — lógica de servicios con repos mockeados
+- **5 tests de integración** — endpoints reales con base de datos en memoria
+
+```bash
+pytest -v                                          # Todos los tests
+pytest -v --cov=src --cov-report=term-missing      # Con cobertura
+pytest -v test/unit                                # Solo unitarios
+pytest -v test/integration                         # Solo integración
+```
+
+## Comandos útiles
+
+```bash
+# ── FastAPI ──────────────────────────────────────────
+fastapi dev src/main.py          # Servidor de desarrollo (hot reload)
+fastapi run src/main.py          # Servidor de producción
+
+# ── Linting y formateo (ruff) ────────────────────────
+ruff check src/ test/            # Chequear errores de estilo
+ruff check --fix src/ test/      # Auto-corregir los que se pueden
+ruff format src/ test/           # Formatear código
+ruff format --check src/ test/   # Verificar formato sin modificar
+
+# ── Type checking (ty) ───────────────────────────────
+ty check src/ test/              # Verificar tipos
+
+# ── pre-commit ───────────────────────────────────────
+pre-commit run --all-files       # Ejecutar todos los hooks manualmente
+pre-commit install               # Instalar hooks como git hooks (pre-commit)
+pre-commit install --hook-type pre-push  # Instalar hooks como pre-push
+```
+
+## Variables de entorno
+
+Copiar `.env.template` a `.env` y ajustar:
+
+```env
+DATABASE_URL=sqlite+aiosqlite:///./restaurante.db
+APP_NAME=Restaurante API
+DEBUG=false
+```
+
+## Enlaces oficiales
+
+| Herramienta       | Documentación                                                                     |
+| ----------------- | --------------------------------------------------------------------------------- |
+| FastAPI           | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/)                             |
+| SQLModel          | [sqlmodel.tiangolo.com](https://sqlmodel.tiangolo.com/)                           |
+| SQLAlchemy        | [docs.sqlalchemy.org](https://docs.sqlalchemy.org/en/20/)                         |
+| ruff              | [docs.astral.sh/ruff](https://docs.astral.sh/ruff/)                               |
+| ty                | [docs.astral.sh/ty](https://docs.astral.sh/ty/)                                   |
+| uv                | [docs.astral.sh/uv](https://docs.astral.sh/uv/)                                   |
+| aiosqlite         | [github.com/omnilib/aiosqlite](https://github.com/omnilib/aiosqlite)              |
+| pre-commit        | [pre-commit.com](https://pre-commit.com/)                                         |
+| pydantic-settings | [docs.pydantic.dev](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) |
+| pytest            | [docs.pytest.org](https://docs.pytest.org/en/stable/)                             |
+| pytest-cov        | [pytest-cov.readthedocs.io](https://pytest-cov.readthedocs.io/en/latest/)         |
+
+## Entrega y evaluación
+
+### Fecha límite
+
+**Lunes 8 de junio** (última clase, evaluación final). No se aceptan entregas fuera de término.
+
+### Formato de entrega
+
+1. Crear una rama con el formato `entrega/nombre-apellido`
+2. Realizar la refactorización completa en esa rama
+3. Incluir en la raíz del proyecto un archivo **`prompt.md`** con todos los prompts utilizados durante el desarrollo
+
+### `prompt.md` — criterios de evaluación
+
+El archivo `prompt.md` debe contener **cada interacción con la IA**, incluyendo:
+
+- Prompt enviado (textual)
+- Qué funcionó y qué no
+- Iteraciones: si la IA se equivocó, qué ajuste hiciste para corregirla
+
+**Rúbrica:**
+
+| Criterio                     | Peso | Qué se evalúa                                                                  |
+| ---------------------------- | ---- | ------------------------------------------------------------------------------ |
+| Creatividad en los prompts   | 30%  | Capacidad de descomponer problemas complejos en prompts atómicos y efectivos   |
+| Eficacia de las indicaciones | 30%  | Precisión, contexto provisto, uso de ejemplos, restricciones claras            |
+| Calidad del código final     | 20%  | Clean Architecture, Clean Code, tests pasando, lint limpio                     |
+| Iteración y corrección       | 20%  | Capacidad de detectar errores de la IA y reformular el prompt para corregirlos |
+
+### Cómo entregar
+
+Abrir un Pull Request desde `entrega/nombre-apellido` hacia `main`. El PR debe incluir en la descripción un resumen de la experiencia (máximo un párrafo).
